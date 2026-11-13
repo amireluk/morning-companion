@@ -1,5 +1,5 @@
 import { TEL_AVIV } from './weather.js';
-import { SHIRT_COLORS } from './art.js';
+import { SHIRT_COLORS, SKINS, HAIRS } from './art.js';
 import { defaultRules, normalizeRules } from './outfit.js';
 
 const KEY = 'mc.settings';
@@ -17,14 +17,30 @@ export const newKid = (i = 0) => ({
   color: SHIRT_COLORS[i % SHIRT_COLORS.length],
 });
 
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+// The kid a brand-new install starts with: random but believable, saved on
+// first load so it stays the same on this device until someone changes it.
+export function randomKid() {
+  const look = pick(['boy', 'girl']);
+  return {
+    ...newKid(0),
+    age: 4 + Math.floor(Math.random() * 6), // 4–9
+    look,
+    hairStyle: look === 'girl' ? pick(['long', 'curly']) : pick(['short', 'short', 'curly']),
+    skin: Math.floor(Math.random() * SKINS.length),
+    hair: Math.floor(Math.random() * HAIRS.length),
+    color: pick(SHIRT_COLORS),
+  };
+}
+
 export const defaults = () => ({
   location: { mode: 'auto', ...TEL_AVIV },
   leaveHour: 8,
   returnHour: 17,
   switchHour: 17, // from this hour on, show tomorrow
-  kids: [newKid(0)], // the welcome screen asks for the real names on first load
+  kids: [randomKid()],
   rules: defaultRules(),
-  configured: false,
 });
 
 export function load() {
@@ -32,7 +48,10 @@ export function load() {
     const s = JSON.parse(localStorage.getItem(KEY));
     if (s && Array.isArray(s.kids)) return { ...defaults(), ...s, rules: normalizeRules(s.rules) };
   } catch { /* ignore */ }
-  return defaults();
+  // first launch: start straight away with a random kid, and keep it
+  const fresh = defaults();
+  save(fresh);
+  return fresh;
 }
 
 export function save(s) {

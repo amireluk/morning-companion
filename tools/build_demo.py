@@ -21,7 +21,7 @@ def app_fix(s):
                   "let DEMO = 'layers';\nlet DEMO_HOUR = 8;\nlet DEMO_LABEL = '';\nlet DEMO_RAIN = 'none';\nlet DEMO_DAY = null;")
     s = s.replace("const locName = DEMO ? `דמו: ${DEMO}` : state.loc?.name || '';", "const locName = DEMO ? `נתוני דוגמה · ${DEMO_LABEL}` : state.loc?.name || '';")
     s = s.replace("if ('serviceWorker' in navigator && !DEMO) navigator.serviceWorker.register('sw.js').catch(() => {});\n", "")
-    s = s.replace("render();\nif (!settings.configured && !DEMO) showWelcome(); else refresh();", "window.__demo = { set(d, h, label, kids) { DEMO = d; DEMO_HOUR = h; DEMO_LABEL = label; if (kids) settings = { ...settings, kids }; render(); }, get kids() { return settings.kids; } };\n")
+    s = s.replace("render();\nrefresh();", "window.__demo = { set(d, h, label, kids) { DEMO = d; DEMO_HOUR = h; DEMO_LABEL = label; if (kids) settings = { ...settings, kids }; render(); }, get kids() { return settings.kids; } };\n")
     s = s.replace('demoDay(DEMO)', '(DEMO_DAY || demoDay(DEMO, DEMO_RAIN))')
     s = s.replace('set(d, h, label, kids) { DEMO = d;', 'set(d, h, label, kids, rain, day) { DEMO_DAY = day || null; DEMO_RAIN = rain; DEMO = d;')
     return s

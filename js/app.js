@@ -2,7 +2,7 @@ import { drawKid, itemIcon, weatherIcon } from './art.js';
 import { planOutfit, phasesOf, isRainy, levelIndex, LEVEL_NAMES } from './outfit.js';
 import { resolveLocation, fetchForecast, dateKey, iconKind, demoDay } from './weather.js';
 import { load, save, isReader } from './store.js';
-import { openSettings, openWelcome } from './settings.js';
+import { openSettings } from './settings.js';
 
 const LABELS = {
   tee: 'חולצה קצרה', longsleeve: 'חולצה ארוכה', sweatshirt: 'סווטשירט', coat: 'מעיל',
@@ -148,9 +148,12 @@ function scene(kids, plan, tomorrow) {
   if (!plan) return '';
   const m = plan.morning;
   const tint = kids[0]?.color;
+  // size figures by age relative to the oldest kid, so siblings differ in
+  // height but a kid on their own fills the scene
+  const raw = (kid) => Math.max(70, Math.min(100, 70 + ((kid.age || 6) - 3) * 6));
+  const tallest = Math.max(...kids.map(raw));
   const figs = kids.map((kid) => {
-    // size the figure by age so a 4-year-old stands shorter than an 8-year-old
-    const h = Math.max(70, Math.min(100, 70 + ((kid.age || 6) - 3) * 6));
+    const h = Math.round((raw(kid) / tallest) * 100);
     const name = kid.name ? `<div class="fig-name" style="--c:${kid.color}">${esc(kid.name)}</div>` : '';
     return `<div class="fig" style="--h:${h}"><div class="fig-art">${drawKid(kid, m, { mood: m.mood })}</div>${name}</div>`;
   }).join('');
@@ -172,7 +175,7 @@ function bindGear() {
 
 function showSettings() {
   openSettings(settings, (next) => {
-    settings = { ...next, configured: true };
+    settings = next;
     save(settings);
     refresh();
   });
@@ -208,13 +211,5 @@ setInterval(refresh, 30 * 60_000);
 
 if ('serviceWorker' in navigator && !DEMO) navigator.serviceWorker.register('sw.js').catch(() => {});
 
-function showWelcome() {
-  openWelcome(settings, ({ kids, leaveHour, returnHour }) => {
-    settings = { ...settings, kids, leaveHour, returnHour, configured: true };
-    save(settings);
-    refresh(); // the location prompt appears now, after the welcome explained it
-  });
-}
-
 render();
-if (!settings.configured && !DEMO) showWelcome(); else refresh();
+refresh();

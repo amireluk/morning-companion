@@ -374,15 +374,6 @@ legend { font-weight: 700; padding: 0 6px; }
 .panel label > span { display: inline-flex; align-items: center; gap: 6px; }
 .panel label > span input[type=number] { width: 72px; }
 
-/* welcome screen */
-.welcome .panel { width: min(640px, 94vw); }
-.welcome h2 { font-size: 28px; }
-.w-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
-.w-kid { display: flex; gap: 14px; align-items: center; padding: 10px; border: 2px solid var(--edge); border-radius: 18px; }
-.w-kid .kid-prev { width: 80px; }
-.w-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-.panel .w-fields input[data-f=name] { font-size: 22px; width: 100%; }
-.panel .w-age { justify-content: flex-start; margin: 0; }
 
 /* tomorrow (evening) mode: unmistakable even without reading */
 .tomorrow .day-badge { font-size: clamp(20px, 4.2vh, 44px); }
@@ -409,20 +400,7 @@ legend { font-weight: 700; padding: 0 6px; }
 .panel fieldset > label { max-width: 560px; }
 .rules input[type=checkbox] { width: 30px; height: 30px; }
 
-/* welcome: remove button tucked in the corner */
-.w-kid { position: relative; padding-inline-end: 40px; }
-.w-del {
-  position: absolute;
-  top: 6px;
-  inset-inline-end: 6px;
-  width: 30px; height: 30px;
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  color: var(--muted) !important;
-  font-size: 16px !important;
-}
-.w-hours { margin-top: 14px; }
+
 
 @media (max-width: 700px) {
   .bag-arrow { transform: rotate(90deg); } /* the bag row runs sideways on phones */
@@ -1279,14 +1257,30 @@ const newKid = (i = 0) => ({
   color: SHIRT_COLORS[i % SHIRT_COLORS.length],
 });
 
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+// The kid a brand-new install starts with: random but believable, saved on
+// first load so it stays the same on this device until someone changes it.
+function randomKid() {
+  const look = pick(['boy', 'girl']);
+  return {
+    ...newKid(0),
+    age: 4 + Math.floor(Math.random() * 6), // 4–9
+    look,
+    hairStyle: look === 'girl' ? pick(['long', 'curly']) : pick(['short', 'short', 'curly']),
+    skin: Math.floor(Math.random() * SKINS.length),
+    hair: Math.floor(Math.random() * HAIRS.length),
+    color: pick(SHIRT_COLORS),
+  };
+}
+
 const defaults = () => ({
   location: { mode: 'auto', ...TEL_AVIV },
   leaveHour: 8,
   returnHour: 17,
   switchHour: 17, // from this hour on, show tomorrow
-  kids: [newKid(0)], // the welcome screen asks for the real names on first load
+  kids: [randomKid()],
   rules: defaultRules(),
-  configured: false,
 });
 
 function load() {
@@ -1294,7 +1288,10 @@ function load() {
     const s = JSON.parse(localStorage.getItem(KEY));
     if (s && Array.isArray(s.kids)) return { ...defaults(), ...s, rules: normalizeRules(s.rules) };
   } catch { /* ignore */ }
-  return defaults();
+  // first launch: start straight away with a random kid, and keep it
+  const fresh = defaults();
+  save(fresh);
+  return fresh;
 }
 
 function save(s) {
@@ -1503,87 +1500,6 @@ function openSettings(current, onSave) {
   draw();
 }
 
-// First load: a short, friendly screen that asks who the kids are.
-function openWelcome(current, onDone) {
-  const kids = structuredClone(current.kids && current.kids.length ? current.kids : [newKid(0)]);
-  const hours = { leaveHour: current.leaveHour ?? 8, returnHour: current.returnHour ?? 17 };
-  const dlg = document.createElement('div');
-  dlg.className = 'settings welcome';
-  document.body.appendChild(dlg);
-
-  const row = (k, i) => `<div class="w-kid">
-      <div class="kid-prev">${drawKid(k, PREVIEW)}</div>
-      <div class="w-fields">
-        <input id="w-name-${i}" data-i="${i}" data-f="name" value="${escS(k.name)}" placeholder="שם" aria-label="שם הילד/ה" autocomplete="off">
-        <label class="w-age">גיל <input id="w-age-${i}" type="number" min="2" max="14" data-i="${i}" data-f="age" value="${k.age}"></label>
-        <div class="row">
-          <button type="button" class="pill${k.look === 'boy' ? ' on' : ''}" data-i="${i}" data-look="boy">ילד</button>
-          <button type="button" class="pill${k.look === 'girl' ? ' on' : ''}" data-i="${i}" data-look="girl">ילדה</button>
-        </div>
-      </div>
-      ${kids.length > 1 ? `<button type="button" class="w-del" data-del="${i}" aria-label="הסרת ${escS(k.name) || 'הילד/ה'}" title="הסרה">✕</button>` : ''}
-    </div>`;
-
-  function draw() {
-    dlg.innerHTML = `<form class="panel">
-      <h2>בוקר טוב! מי הילדים?</h2>
-      <div class="hint">כל בוקר נראה להם מה ללבוש לפי מזג האוויר. אפשר לשנות הכול אחר כך בכפתור ☰ שבפינה.</div>
-      <div class="w-list">${kids.map(row).join('')}</div>
-      ${kids.length < MAX_KIDS ? '<button type="button" class="add">+ עוד ילד/ה</button>' : ''}
-      <fieldset class="w-hours"><legend>מתי יוצאים וחוזרים?</legend>
-        <label>יוצאים מהבית <select id="w-leave">${hourOpts(hours.leaveHour, 5, 12)}</select></label>
-        <label>חוזרים הביתה <select id="w-return">${hourOpts(hours.returnHour, 10, 20)}</select></label>
-        <div class="hint">הבגדים נבחרים לפי מזג האוויר בשעות האלה.</div>
-      </fieldset>
-      <div class="hint">📍 בלחיצה על "מתחילים" הדפדפן יבקש גישה למיקום – כדי להביא את התחזית של המקום שלכם.</div>
-      <div class="actions"><button type="submit" class="save">יאללה, מתחילים</button></div>
-    </form>`;
-  }
-  const sync = () => {
-    const l = dlg.querySelector('#w-leave'), r = dlg.querySelector('#w-return');
-    if (l) hours.leaveHour = Number(l.value);
-    if (r) hours.returnHour = Number(r.value);
-    syncKids();
-  };
-  const syncKids = () => dlg.querySelectorAll('input[data-f]').forEach((el) => {
-    const k = kids[+el.dataset.i];
-    if (el.dataset.f === 'name') k.name = el.value.trim();
-    else k.age = Math.max(2, Math.min(14, Number(el.value) || k.age));
-  });
-
-  dlg.addEventListener('click', (e) => {
-    const b = e.target.closest('button');
-    if (!b) return;
-    sync();
-    if (b.classList.contains('add')) { kids.push(newKid(kids.length)); draw(); dlg.querySelector(`#w-name-${kids.length - 1}`)?.focus(); return; }
-    if (b.dataset.del != null) { kids.splice(+b.dataset.del, 1); return draw(); }
-    if (b.dataset.look) {
-      const k = kids[+b.dataset.i];
-      k.look = b.dataset.look;
-      k.hairStyle = k.look === 'girl' ? 'long' : 'short';
-      draw();
-    }
-  });
-  // update just this kid's preview (a full redraw here would swallow a click
-  // on a button pressed right after typing the age)
-  dlg.addEventListener('change', (e) => {
-    if (e.target.dataset.f !== 'age') return;
-    sync();
-    const i = +e.target.dataset.i;
-    const prev = dlg.querySelectorAll('.w-kid .kid-prev')[i];
-    if (prev) prev.innerHTML = drawKid(kids[i], PREVIEW);
-  });
-  dlg.addEventListener('submit', (e) => {
-    e.preventDefault();
-    sync();
-    if (hours.returnHour <= hours.leaveHour) hours.returnHour = hours.leaveHour + 1;
-    dlg.remove();
-    onDone({ kids, ...hours });
-  });
-  draw();
-  dlg.querySelector('#w-name-0')?.focus();
-}
-
 
 const LABELS = {
   tee: 'חולצה קצרה', longsleeve: 'חולצה ארוכה', sweatshirt: 'סווטשירט', coat: 'מעיל',
@@ -1731,9 +1647,12 @@ function scene(kids, plan, tomorrow) {
   if (!plan) return '';
   const m = plan.morning;
   const tint = kids[0]?.color;
+  // size figures by age relative to the oldest kid, so siblings differ in
+  // height but a kid on their own fills the scene
+  const raw = (kid) => Math.max(70, Math.min(100, 70 + ((kid.age || 6) - 3) * 6));
+  const tallest = Math.max(...kids.map(raw));
   const figs = kids.map((kid) => {
-    // size the figure by age so a 4-year-old stands shorter than an 8-year-old
-    const h = Math.max(70, Math.min(100, 70 + ((kid.age || 6) - 3) * 6));
+    const h = Math.round((raw(kid) / tallest) * 100);
     const name = kid.name ? `<div class="fig-name" style="--c:${kid.color}">${esc(kid.name)}</div>` : '';
     return `<div class="fig" style="--h:${h}"><div class="fig-art">${drawKid(kid, m, { mood: m.mood })}</div>${name}</div>`;
   }).join('');
@@ -1755,7 +1674,7 @@ function bindGear() {
 
 function showSettings() {
   openSettings(settings, (next) => {
-    settings = { ...next, configured: true };
+    settings = next;
     save(settings);
     refresh();
   });
@@ -1789,14 +1708,6 @@ document.addEventListener('visibilitychange', () => {
 setInterval(render, 60_000);
 setInterval(refresh, 30 * 60_000);
 
-
-function showWelcome() {
-  openWelcome(settings, ({ kids, leaveHour, returnHour }) => {
-    settings = { ...settings, kids, leaveHour, returnHour, configured: true };
-    save(settings);
-    refresh(); // the location prompt appears now, after the welcome explained it
-  });
-}
 
 window.__demo = { set(d, h, label, kids, rain, day) { DEMO_DAY = day || null; DEMO_RAIN = rain; DEMO = d; DEMO_HOUR = h; DEMO_LABEL = label; if (kids) settings = { ...settings, kids }; render(); }, get kids() { return settings.kids; } };
 

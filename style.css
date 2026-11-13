@@ -363,15 +363,6 @@ legend { font-weight: 700; padding: 0 6px; }
 .panel label > span { display: inline-flex; align-items: center; gap: 6px; }
 .panel label > span input[type=number] { width: 72px; }
 
-/* welcome screen */
-.welcome .panel { width: min(640px, 94vw); }
-.welcome h2 { font-size: 28px; }
-.w-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
-.w-kid { display: flex; gap: 14px; align-items: center; padding: 10px; border: 2px solid var(--edge); border-radius: 18px; }
-.w-kid .kid-prev { width: 80px; }
-.w-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-.panel .w-fields input[data-f=name] { font-size: 22px; width: 100%; }
-.panel .w-age { justify-content: flex-start; margin: 0; }
 
 /* tomorrow (evening) mode: unmistakable even without reading */
 .tomorrow .day-badge { font-size: clamp(20px, 4.2vh, 44px); }
@@ -398,20 +389,7 @@ legend { font-weight: 700; padding: 0 6px; }
 .panel fieldset > label { max-width: 560px; }
 .rules input[type=checkbox] { width: 30px; height: 30px; }
 
-/* welcome: remove button tucked in the corner */
-.w-kid { position: relative; padding-inline-end: 40px; }
-.w-del {
-  position: absolute;
-  top: 6px;
-  inset-inline-end: 6px;
-  width: 30px; height: 30px;
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  color: var(--muted) !important;
-  font-size: 16px !important;
-}
-.w-hours { margin-top: 14px; }
+
 
 @media (max-width: 700px) {
   .bag-arrow { transform: rotate(90deg); } /* the bag row runs sideways on phones */
