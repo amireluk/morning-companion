@@ -122,8 +122,11 @@ function timeline(win, readers) {
     const h = rainy.length ? rainy.reduce((a, b) => (b.precip > a.precip ? b : a)) : ph[Math.floor(ph.length / 2)];
     let kind = iconKind(h);
     if (rainy.length && !['rain', 'drizzle', 'storm', 'snow'].includes(kind)) kind = 'rain';
-    const temp = Math.round(ph.reduce((t, x) => t + x.temp, 0) / ph.length);
-    const feels = ph.reduce((t, x) => t + x.feels, 0) / ph.length;
+    // show the coldest (feels-like) hour of this part of the day: that is the
+    // hour the clothes are chosen for, so the tile and the outfit agree
+    const cold = ph.reduce((a, b) => (b.feels < a.feels ? b : a));
+    const temp = Math.round(cold.temp);
+    const feels = cold.feels;
     const pop = Math.max(...ph.map((x) => x.pop));
     return `<div class="phase">` +
       weatherIcon(kind, !h.day) +
