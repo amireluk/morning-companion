@@ -19,7 +19,6 @@ export const A = {
   coldMax: 16, // … and at most this cold
   swingBy: 5, // morning→later rise this much bigger than the week's usual rise …
   swingMin: 12, // … and at least this big
-  strongUv: 8, // mentioned only together with a swing
   // with no past data (offline, demo): only true extremes
   absHot: 38,
   absCold: 3,
@@ -63,35 +62,27 @@ export function computeAlerts(win, rules, base = null) {
   const maxMm = Math.max(...win.map((h) => h.precip || 0));
   const maxWind = Math.max(...win.map((h) => h.wind || 0));
   const maxGust = Math.max(...win.map((h) => h.gust || 0));
-  const maxUv = Math.max(...win.map((h) => h.uv || 0));
   const has = (test) => win.some(test);
 
   // rare on their own
-  if (has((h) => h.code >= 95)) add(1, 'storm', 'סופת רעמים צפויה');
-  if (has((h) => (h.code >= 71 && h.code <= 77) || h.code === 85 || h.code === 86)) add(2, 'snow', 'שלג צפוי');
-  if (totalMm >= A.heavyRainDayMm || maxMm >= A.heavyRainHourMm) add(3, 'rain', 'גשם חזק במיוחד');
-  if (maxWind >= A.windKmh || maxGust >= A.gustKmh) {
-    add(4, 'wind', `רוח חזקה${maxGust >= A.gustKmh ? ` – משבים עד ${Math.round(maxGust)} קמ״ש` : ''}`);
-  }
+  if (has((h) => h.code >= 95)) add(1, 'storm', 'סופת רעמים');
+  if (has((h) => (h.code >= 71 && h.code <= 77) || h.code === 85 || h.code === 86)) add(2, 'snow', 'שלג');
+  if (totalMm >= A.heavyRainDayMm || maxMm >= A.heavyRainHourMm) add(3, 'rain', 'גשם חזק');
+  if (maxWind >= A.windKmh || maxGust >= A.gustKmh) add(4, 'wind', 'רוח חזקה');
 
   // unusual compared with the past week
   const hot = base ? st.peak - base.peak >= A.hotterBy && st.peak >= A.hotMin : st.peak >= A.absHot;
   const cold = base ? base.low - st.low >= A.colderBy && st.low <= A.coldMax : st.low <= A.absCold;
   const swing = st.warmest && (base ? st.rise - base.rise >= A.swingBy && st.rise >= A.swingMin : st.rise >= A.absSwing);
-  if (hot) add(5, 'clear', `חם במיוחד${base ? ' לעומת הימים האחרונים' : ''} – מרגיש כמו ${Math.round(st.peak)}°, לשתות הרבה`);
-  if (cold) add(5, 'snow', `קר במיוחד${base ? ' לעומת הימים האחרונים' : ''} – מרגיש כמו ${Math.round(st.low)}°`);
+  if (hot) add(5, 'clear', 'חם מהרגיל');
+  if (cold) add(5, 'snow', 'קר מהרגיל');
   // a morning that needs a warm layer and a later part warm enough for a
   // cap: easy to dress wrong, so always worth a note (not only when unusual)
   const amLv = rules.levels[levelIndex(st.am, rules)];
   const hotLv = st.warmest && rules.levels[levelIndex(st.warmest.feels, rules)];
   const coldToHot = hotLv && (amLv.sweatshirt || amLv.coat) && hotLv.cap;
-  if (coldToHot) {
-    const w = st.warmest;
-    add(6, 'partly', `בבוקר ${word(st.am, rules)} (${Math.round(st.am)}°) – ${amLv.coat ? 'מעיל' : 'סווטשירט'}, ${later(w.hour)} ${word(w.feels, rules)} (${Math.round(w.feels)}°) – כובע`);
-  } else if (swing) {
-    const w = st.warmest;
-    const sun = maxUv >= A.strongUv ? ' ושמש חזקה' : '';
-    add(6, 'partly', `בבוקר ${word(st.am, rules)} (${Math.round(st.am)}°), ${later(w.hour)} ${word(w.feels, rules)} (${Math.round(w.feels)}°)${sun}`);
+  if (coldToHot || swing) {
+    add(6, 'partly', `בבוקר ${word(st.am, rules)}, אבל ${later(st.warmest.hour)} ${word(st.warmest.feels, rules)}`);
   }
 
   return out.sort((a, b) => a.rank - b.rank).slice(0, 3);

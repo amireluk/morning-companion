@@ -17,7 +17,8 @@ const DEMO = params.get('demo');
 const DEMO_HOUR = params.has('hour') ? Number(params.get('hour')) : null;
 
 let settings = load();
-const state = { loc: null, forecast: null, error: null, fetchedAt: 0, wakeUntil: 0 };
+const state = { loc: null, forecast: null, error: null, fetchedAt: 0, wakeUntil: 0, view: 0, viewUntil: 0 };
+const VIEW_MS = 30_000; // a tapped tile shows its outfit for this long, then back to morning
 const app = document.getElementById('app');
 
 const now = () => {
@@ -99,7 +100,7 @@ function render() {
   } else {
     const win = day.filter((h) => h.hour >= settings.leaveHour && h.hour <= settings.returnHour);
     body = timeline(win, readers) + alertsRow(win, key) +
-      scene(kids, planOutfit(win, 0, settings.rules), tomorrow);
+      scene(kids, planOutfit(win, 0, settings.rules), tomorrow, win);
   }
   app.innerHTML = header(tomorrow, date) + body;
   bindGear();
@@ -117,7 +118,8 @@ function header(tomorrow, date) {
 
 // Three tiles: morning / noon / evening of the hours the kids are out.
 function timeline(win, readers) {
-  const tiles = phasesOf(win).map((ph) => {
+  const view = currentView();
+  const tiles = phasesOf(win).map((ph, i) => {
     const rainy = ph.filter((x) => isRainy(x, settings.rules));
     const h = rainy.length ? rainy.reduce((a, b) => (b.precip > a.precip ? b : a)) : ph[Math.floor(ph.length / 2)];
     let kind = iconKind(h);
@@ -132,15 +134,22 @@ function timeline(win, readers) {
     const feels = cold.feels;
     const pop = Math.max(...ph.map((x) => x.pop));
     const from = ph[0].hour, to = ph[ph.length - 1].hour + 1;
-    return `<div class="phase">` +
+    return `<button type="button" class="phase${i === view ? ' on' : ''}" data-phase="${i}" aria-pressed="${i === view}">` +
       weatherIcon(kind, !h.day) +
       `<div class="ptext"><span class="pname">${phaseName(from, to)}</span>` +
       `<div class="tchip" style="background:${levelColor(feels)}"><bdi dir="ltr">${Math.round(feels)}°</bdi></div>` +
       `<span class="pfeel">${feelWord(feels)}</span>` +
       (rainy.length ? `<div class="pop">💧 ${pop}%</div>` : '') +
-      `</div></div>`;
+      `</div></button>`;
   }).join('');
   return `<section class="timeline">${tiles}</section>`;
+}
+
+// Which part of the day the scene shows: 0 = morning (what to wear when
+// leaving), or a tapped tile, until it times out.
+function currentView() {
+  if (state.view && Date.now() > state.viewUntil) state.view = 0;
+  return state.view;
 }
 
 // "שים לב" – only when there's something unusual to point out
@@ -158,9 +167,14 @@ function alertsRow(win, key) {
 
 // All the kids together, dressed alike for leaving the house, with one row of
 // clothing cards and one bag for what's needed later.
-function scene(kids, plan, tomorrow) {
+function scene(kids, plan, tomorrow, win) {
   if (!plan) return '';
-  const m = plan.morning;
+  // tapping noon/afternoon dresses the kids for that part of the day; the
+  // morning view (default) is what to put on when leaving the house
+  const view = Math.min(currentView(), plan.phases.length - 1);
+  const ph = view ? plan.phases[view] : null;
+  const hottest = settings.rules.levels.length - 1;
+  const m = ph ? { ...ph, mood: ph.cold ? 'cold' : levelIndex(ph.tMax, settings.rules) === hottest ? 'hot' : 'ok' } : plan.morning;
   const tint = kids[0]?.color;
   // size figures by age relative to the oldest kid, so siblings differ in
   // height but a kid on their own fills the scene
@@ -173,11 +187,15 @@ function scene(kids, plan, tomorrow) {
   }).join('');
   const card = (id) => `<div class="card">${itemIcon(id, tint)}<div class="clabel">${LABELS[id] || ''}</div></div>`;
   const worn = [m.shirt, m.bottom, m.shoes, ...m.layers, ...m.acc];
-  const bag = plan.bag.length
+  const bag = !ph && plan.bag.length
     ? `<div class="bag"><div class="bag-title">לקחת איתך</div><div class="bag-items">${plan.bag.map(card).join('')}</div>` +
       `<div class="bag-arrow">⬇</div><div class="bag-icon">${itemIcon('backpack')}</div></div>`
     : '';
-  const ribbon = tomorrow ? `<div class="tomorrow-ribbon">${weatherIcon('sunrise')}<span>מחר בבוקר</span></div>` : '';
+  const when = ph ? phaseName(ph.from, ph.to + 1) : 'בבוקר';
+  const label = ph ? (when === 'אחה״צ' ? 'אחר הצהריים' : `ב${when}`) : 'בבוקר';
+  const ribbon = tomorrow || ph
+    ? `<div class="tomorrow-ribbon${ph ? ' phase-ribbon' : ''}">${weatherIcon(tomorrow && !ph ? 'sunrise' : 'clear', false)}<span>${tomorrow ? 'מחר ' : ''}${label}</span></div>`
+    : '';
   return `<main class="scene kids-${kids.length}">${ribbon}<div class="scene-body"><div class="figs">${figs}</div>${bag}</div>` +
     `<div class="items">${worn.map(card).join('')}</div></main>`;
 }
@@ -185,6 +203,14 @@ function scene(kids, plan, tomorrow) {
 // ---------- settings access (long press on the gear) ----------
 function bindGear() {
   app.querySelector('.gear')?.addEventListener('click', showSettings);
+  app.querySelectorAll('.phase').forEach((b) => b.addEventListener('click', () => {
+    const i = +b.dataset.phase;
+    state.view = i === state.view ? 0 : i; // tapping again goes back to morning
+    state.viewUntil = Date.now() + VIEW_MS;
+    render();
+    clearTimeout(state.viewTimer);
+    if (state.view) state.viewTimer = setTimeout(render, VIEW_MS + 100);
+  }));
 }
 
 function showSettings() {
@@ -211,7 +237,8 @@ async function manageWakeLock() {
 document.addEventListener('pointerdown', () => {
   if (document.body.classList.contains('night')) {
     state.wakeUntil = Date.now() + 60_000;
-    render();
+    // only lift the dimming; a full redraw here would swallow the tap
+    document.body.classList.remove('night');
   }
 });
 

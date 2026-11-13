@@ -131,6 +131,7 @@ body.tomorrow {
 
 /* ---------- the scene: all kids together ---------- */
 .scene {
+  position: relative; /* anchors the 'מחר בבוקר' / part-of-day ribbon */
   flex: 1;
   min-height: 0;
   display: flex;
@@ -515,3 +516,10 @@ legend { font-weight: 700; padding: 0 6px; }
   .day-sub { font-size: 12px; }
   .tomorrow .day-badge { font-size: inherit; }
 }
+
+/* weather tiles are buttons: tap to see that part of the day's outfit */
+.phase { font: inherit; color: inherit; cursor: pointer; }
+.phase.on { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(240,138,75,.35); }
+.phase:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.phase-ribbon { background: #f08a4b; color: #fff; }
+.tomorrow .phase-ribbon { background: #2f3c6e; color: #fff4c2; }

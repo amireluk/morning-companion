@@ -119,7 +119,9 @@ export function planOutfit(hours, offset = 0, rules = defaultRules()) {
     }
   }
   const hottest = rules.levels.length - 1;
-  for (const s of segments) {
+  // every part of the day (for tapping a tile) and every merged segment wears
+  // the same base clothes, chosen for the whole day
+  for (const s of [...segments, ...raw]) {
     s.shirt = shirt; s.bottom = bottom; s.shoes = shoes;
     s.mood = s.cold ? 'cold' : levelIndex(s.tMax, rules) === hottest ? 'hot' : 'ok';
   }
