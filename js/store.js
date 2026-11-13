@@ -41,5 +41,6 @@ export function save(s) {
   try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* ignore */ }
 }
 
-// Kids aged 7+ get numbers and words; younger kids see pictures only.
-export const isReader = (kid) => (kid.age || 0) >= 7;
+// Words and numbers are shown for every kid (a parent or older sibling can read
+// them; the pictures carry the meaning for kids who can't read yet).
+export const isReader = () => true;

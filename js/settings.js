@@ -27,7 +27,6 @@ export function openSettings(current, onSave) {
       <div class="kid-fields">
         <label>שם <input data-k="${i}" data-f="name" value="${esc(k.name)}" placeholder="לא חובה"></label>
         <label>גיל <input type="number" min="2" max="14" data-k="${i}" data-f="age" value="${k.age}"></label>
-        <div class="hint">${k.age >= 7 ? 'יוצגו גם מילים ומספרים' : 'רק ציורים, בלי טקסט'}</div>
         <div class="row">
           <button type="button" class="pill${k.look === 'boy' ? ' on' : ''}" data-k="${i}" data-f="look" data-v="boy">ילד</button>
           <button type="button" class="pill${k.look === 'girl' ? ' on' : ''}" data-k="${i}" data-f="look" data-v="girl">ילדה</button>
@@ -103,7 +102,7 @@ export function openSettings(current, onSave) {
     if (el.dataset.k != null) {
       const k = s.kids[+el.dataset.k];
       k[f] = f === 'name' ? el.value.trim() : Number(el.value);
-      if (f === 'age') draw();
+      if (f === 'age') draw(); // figure size follows age
     } else {
       s[f] = Number(el.value);
     }

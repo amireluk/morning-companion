@@ -120,6 +120,7 @@ body.tomorrow {
   display: grid;
   place-items: center;
 }
+.pfeel { font-weight: 700; font-size: clamp(13px, 2.2vh, 24px); line-height: 1; }
 .pop { font-size: clamp(12px, 2vh, 20px); color: #3d8fe0; font-weight: 700; line-height: 1; }
 
 /* ---------- kids ---------- */

@@ -1,4 +1,4 @@
-import { drawKid, itemIcon, weatherIcon, skyClock } from './art.js';
+import { drawKid, itemIcon, weatherIcon } from './art.js';
 import { planOutfit, phasesOf, isRainy } from './outfit.js';
 import { resolveLocation, fetchForecast, dateKey, iconKind, demoDay } from './weather.js';
 import { load, save, isReader } from './store.js';
@@ -48,6 +48,16 @@ const deg = (t) => `${Math.round(t)}°`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 const PHASES = ['בוקר', 'צהריים', 'ערב'];
+
+// a word for how it feels outside, from the feels-like temperature
+function feelWord(t) {
+  if (t < 7) return 'קר מאוד';
+  if (t < 12) return 'קר';
+  if (t < 17) return 'קריר';
+  if (t < 22) return 'נעים';
+  if (t < 28) return 'חם';
+  return 'חם מאוד';
+}
 
 // ---------- data ----------
 async function refresh() {
@@ -112,17 +122,15 @@ function timeline(win, readers) {
     const h = rainy.length ? rainy.reduce((a, b) => (b.precip > a.precip ? b : a)) : ph[Math.floor(ph.length / 2)];
     let kind = iconKind(h);
     if (rainy.length && !['rain', 'drizzle', 'storm', 'snow'].includes(kind)) kind = 'rain';
-    const temps = ph.map((x) => x.temp);
-    const lo = Math.round(Math.min(...temps)), hi = Math.round(Math.max(...temps));
-    const avgFeels = ph.reduce((s, x) => s + x.feels, 0) / ph.length;
-    const range = `<bdi dir="ltr">${hi - lo < 2 ? deg((lo + hi) / 2) : `${lo}°–${hi}°`}</bdi>`;
+    const temp = Math.round(ph.reduce((t, x) => t + x.temp, 0) / ph.length);
+    const feels = ph.reduce((t, x) => t + x.feels, 0) / ph.length;
     const pop = Math.max(...ph.map((x) => x.pop));
     return `<div class="phase">` +
-      skyClock((ph[0].hour + ph[ph.length - 1].hour) / 2) +
       weatherIcon(kind, !h.day) +
-      `<div class="ptext">${readers ? `<span class="pname">${PHASES[i] || ''}</span>` : ''}` +
-      `<div class="tchip" style="background:${tempColor(avgFeels)}">${readers ? range : ''}</div>` +
-      (rainy.length ? `<div class="pop">💧${readers ? ` ${pop}%` : ''}</div>` : '') +
+      `<div class="ptext"><span class="pname">${PHASES[i] || ''}</span>` +
+      `<div class="tchip" style="background:${tempColor(feels)}"><bdi dir="ltr">${temp}°</bdi></div>` +
+      `<span class="pfeel">${feelWord(feels)}</span>` +
+      (rainy.length ? `<div class="pop">💧 ${pop}%</div>` : '') +
       `</div></div>`;
   }).join('');
   return `<section class="timeline">${tiles}</section>`;
