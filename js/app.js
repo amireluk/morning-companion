@@ -17,7 +17,9 @@ const DEMO = params.get('demo');
 const DEMO_HOUR = params.has('hour') ? Number(params.get('hour')) : null;
 
 let settings = load();
-const state = { loc: null, forecast: null, error: null, fetchedAt: 0, wakeUntil: 0, view: 0, viewUntil: 0 };
+// at night the screen dims only after this long without a touch (not on opening)
+const AWAKE_MS = 2 * 60_000;
+const state = { loc: null, forecast: null, error: null, fetchedAt: 0, wakeUntil: Date.now() + AWAKE_MS, view: 0, viewUntil: 0 };
 const VIEW_MS = 30_000; // a tapped tile shows its outfit for this long, then back to morning
 const app = document.getElementById('app');
 
@@ -227,17 +229,17 @@ async function manageWakeLock() {
   } catch { /* not allowed right now */ }
 }
 
-// a tap in the dark brings full brightness for a minute
+// any touch keeps full brightness for a while; in the dark the screen dims
+// again once nobody has touched it for AWAKE_MS
 document.addEventListener('pointerdown', () => {
-  if (document.body.classList.contains('night')) {
-    state.wakeUntil = Date.now() + 60_000;
-    // only lift the dimming; a full redraw here would swallow the tap
-    document.body.classList.remove('night');
-  }
+  state.wakeUntil = Date.now() + AWAKE_MS;
+  // only lift the dimming; a full redraw here would swallow the tap
+  document.body.classList.remove('night');
 });
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
+  state.wakeUntil = Date.now() + AWAKE_MS; // reopened: start bright
   if (Date.now() - state.fetchedAt > 15 * 60_000) refresh(); else render();
 });
 
