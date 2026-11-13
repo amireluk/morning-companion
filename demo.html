@@ -66,6 +66,7 @@ body.tomorrow {
   min-height: 40px;
 }
 .day-badge {
+  white-space: nowrap;
   display: flex;
   align-items: center;
   gap: .6em;
@@ -79,8 +80,9 @@ body.tomorrow {
   display: flex;
   align-items: center;
   gap: .5em;
-  color: var(--muted);
-  font-size: clamp(12px, 1.8vh, 18px);
+  color: var(--ink);
+  opacity: .75;
+  font-size: clamp(14px, 2.1vh, 20px);
 }
 .tomorrow .where { color: #c7c9ec; }
 .stale { width: .7em; height: .7em; border-radius: 50%; background: #f0b44b; display: inline-block; }
@@ -94,15 +96,30 @@ body.tomorrow {
   border-radius: 50%;
   touch-action: none;
 }
-.gear.pressing { opacity: 1; background: rgba(240,138,75,.25); transition: background 1.2s; }
+.gear { position: relative; width: 56px; height: 56px; display: grid; place-items: center; }
+/* a ring that fills while the gear is held */
+@property --p { syntax: '<number>'; inherits: false; initial-value: 0; }
+.gear::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) calc(var(--p) * 1%), rgba(0,0,0,.08) 0);
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 60%);
+  mask: radial-gradient(circle, transparent 58%, #000 60%);
+  opacity: 0;
+}
+.gear.pressing { opacity: 1; }
+.gear.pressing::before { opacity: 1; animation: gear-fill 1.2s linear forwards; }
+@keyframes gear-fill { to { --p: 100; } }
 
 /* ---------- timeline: morning / noon / evening ---------- */
 .timeline {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.4vw;
-  height: 16vh;
-  min-height: 90px;
+  height: 13.5vh;
+  min-height: 88px;
 }
 .phase {
   display: flex;
@@ -116,8 +133,9 @@ body.tomorrow {
   border: 3px solid var(--edge);
 }
 .phase .sky-svg { height: clamp(28px, 7vh, 70px); width: auto; flex: none; }
-.phase .wx-svg { height: clamp(44px, 12vh, 120px); width: auto; flex: none; }
-.ptext { display: flex; flex-direction: column; align-items: center; gap: .6vh; }
+.phase .wx-svg { height: clamp(40px, 9vh, 100px); width: auto; flex: none; }
+.ptext { display: flex; flex-direction: column; align-items: center; gap: .4vh; }
+.phours { font-weight: 500; font-size: .62em; color: var(--muted); }
 .pname { font-weight: 700; font-size: clamp(14px, 2.4vh, 26px); line-height: 1; }
 .tchip {
   min-width: 9vh;
@@ -132,7 +150,7 @@ body.tomorrow {
   place-items: center;
 }
 .pfeel { font-weight: 700; font-size: clamp(13px, 2.2vh, 24px); line-height: 1; }
-.pop { font-size: clamp(12px, 2vh, 20px); color: #3d8fe0; font-weight: 700; line-height: 1; }
+.pop { font-size: clamp(12px, 2vh, 20px); color: #1f6fbf; font-weight: 700; line-height: 1; }
 
 /* ---------- the scene: all kids together ---------- */
 .scene {
@@ -241,8 +259,8 @@ body.tomorrow {
   margin-top: .6vh;
   border-top: 3px dotted var(--edge);
 }
-.items .card { width: auto; flex: 0 1 clamp(50px, 10vh, 112px); min-width: min-content; }
-.items .clabel { font-size: clamp(10px, 1.6vh, 16px); }
+.items .card { width: auto; flex: 0 1 clamp(70px, 14.5vh, 160px); min-width: min-content; }
+.items .clabel { font-size: clamp(13px, 2.3vh, 22px); font-weight: 700; }
 
 
 
@@ -377,6 +395,54 @@ legend { font-weight: 700; padding: 0 6px; }
 .w-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 .panel .w-fields input[data-f=name] { font-size: 22px; width: 100%; }
 .panel .w-age { justify-content: flex-start; margin: 0; }
+
+/* tomorrow (evening) mode: unmistakable even without reading */
+.tomorrow .day-badge { font-size: clamp(20px, 4.2vh, 44px); }
+.tomorrow .scene { background: #ecebff; border-color: #b9b3e0; position: relative; }
+.tomorrow-ribbon {
+  position: absolute;
+  top: 1.2vh;
+  inset-inline-start: 50%;
+  transform: translateX(50%);
+  display: flex;
+  align-items: center;
+  gap: .4em;
+  padding: .2em 1em .2em .6em;
+  border-radius: 99px;
+  background: #2f3c6e;
+  color: #fff4c2;
+  font-weight: 700;
+  font-size: clamp(18px, 3.4vh, 36px);
+  z-index: 1;
+}
+.tomorrow-ribbon .wx-svg { height: 1.6em; width: auto; }
+
+/* settings: controls next to their labels, bigger checkboxes */
+.panel fieldset > label { max-width: 560px; }
+.rules input[type=checkbox] { width: 30px; height: 30px; }
+
+/* welcome: remove button tucked in the corner */
+.w-kid { position: relative; padding-inline-end: 40px; }
+.w-del {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  width: 30px; height: 30px;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--muted) !important;
+  font-size: 16px !important;
+}
+.w-hours { margin-top: 14px; }
+
+@media (max-width: 700px) {
+  .bag-arrow { transform: rotate(90deg); } /* the bag row runs sideways on phones */
+  .items { gap: 4px; }
+  .items .card { flex: 1 1 0; min-width: 0; max-width: 76px; }
+  .items .clabel { font-size: 12px; }
+  .tomorrow-ribbon { position: static; transform: none; align-self: center; margin-bottom: 6px; font-size: 18px; }
+}
 
 /* ---- demo wrapper (single-look storybook page; day = paper, "tomorrow" = night sky) ---- */
 :root { --bar: #fffaf0; --bar-ink: #5b4634; --chip: #ffffff; --chip-on: #f08a4b; }
@@ -926,7 +992,8 @@ const defaultRules = () => ({
     lvl(29, 'tee', 'shorts', 'sneakers', { cap: true }), // warm
     lvl(null, 'tee', 'shorts', 'sandals', { cap: true }), // hot
   ],
-  rain: { chance: 50, bootsMm: 6 },
+  // boots: 'heavy' (at least bootsMm of rain in the day), 'any' rain, or 'never'
+  rain: { chance: 50, boots: 'heavy', bootsMm: 6 },
 });
 
 // Make a stored rules object safe to use (missing fields fall back to defaults).
@@ -977,7 +1044,9 @@ function planOutfit(hours, offset = 0, rules = defaultRules()) {
   const coldPart = C.sweatshirt || C.coat;
   const shirt = P.shirt === 'tee' ? 'tee' : 'longsleeve';
   const bottom = P.bottom === 'shorts' && !coldPart ? 'shorts' : 'pants';
-  const shoes = totalMm >= rules.rain.bootsMm ? 'boots'
+  const bootsOn = rules.rain.boots === 'any' ? anyRain
+    : rules.rain.boots === 'never' ? false : totalMm >= rules.rain.bootsMm;
+  const shoes = bootsOn ? 'boots'
     : P.shoes === 'sandals' && !anyRain && C.bottom === 'shorts' ? 'sandals' : 'sneakers';
 
   const raw = phasesOf(hours).map((ph) => {
@@ -1298,9 +1367,9 @@ function openSettings(current, onSave) {
       <div class="rules-wrap"><table class="rules">
         <thead><tr><th>תחושה</th><th>טמפ׳</th>${head('tee', 'חולצה')}${head('pants', 'מכנס')}${head('sneakers', 'נעליים')}${head('sweatshirt', 'סווטשירט')}${head('coat', 'מעיל')}${head('beanie', 'כובע צמר, צעיף, כפפות')}${head('cap', 'כובע שמש')}</tr></thead>
         <tbody>${rows}</tbody></table></div>
-      <div class="hint">חולצה, מכנס ונעליים נבחרים לפי השעה החמה ביום. סווטשירט, מעיל ובגדי חורף – לפי כל חלק ביום (מה שצריך רק אחר כך נכנס לתיק). מכנס קצר וסנדלים רק אם גם השעה הקרה לא דורשת סווטשירט.</div>
+      <div class="hint">חולצה, מכנס ונעליים – לפי השעה החמה ביום. סווטשירט, מעיל ובגדי חורף – לפי השעה הקרה. מה שצריך רק בהמשך היום מופיע ב"לקחת איתך".</div>
       <label>מטריה כשסיכוי הגשם לפחות <span><input type="number" min="0" max="100" data-rain="chance" value="${R.rain.chance}"> %</span></label>
-      <label>מגפיים כשצפוי לפחות <span><input type="number" min="0" step="0.5" data-rain="bootsMm" value="${R.rain.bootsMm}"> מ״מ גשם ביום</span></label>
+      <label>מגפיי גשם <select data-rain="boots">${[['heavy', 'רק בגשם חזק'], ['any', 'בכל גשם'], ['never', 'אף פעם']].map(([v, t]) => `<option value="${v}"${R.rain.boots === v ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
       <button type="button" class="reset-rules">החזרת ברירת המחדל</button>
     </fieldset>`;
   }
@@ -1371,7 +1440,7 @@ function openSettings(current, onSave) {
       }
       return;
     }
-    if (el.dataset.rain) { s.rules.rain[el.dataset.rain] = Number(el.value); return; }
+    if (el.dataset.rain) { s.rules.rain[el.dataset.rain] = el.dataset.rain === 'boots' ? el.value : Number(el.value); return; }
     const f = el.dataset.f;
     if (!f) return;
     if (el.dataset.k != null) {
@@ -1420,6 +1489,7 @@ function openSettings(current, onSave) {
 // First load: a short, friendly screen that asks who the kids are.
 function openWelcome(current, onDone) {
   const kids = structuredClone(current.kids && current.kids.length ? current.kids : [newKid(0)]);
+  const hours = { leaveHour: current.leaveHour ?? 8, returnHour: current.returnHour ?? 17 };
   const dlg = document.createElement('div');
   dlg.className = 'settings welcome';
   document.body.appendChild(dlg);
@@ -1432,9 +1502,10 @@ function openWelcome(current, onDone) {
         <div class="row">
           <button type="button" class="pill${k.look === 'boy' ? ' on' : ''}" data-i="${i}" data-look="boy">ילד</button>
           <button type="button" class="pill${k.look === 'girl' ? ' on' : ''}" data-i="${i}" data-look="girl">ילדה</button>
-          ${kids.length > 1 ? `<button type="button" class="remove" data-del="${i}" aria-label="הסרה">✕</button>` : ''}
         </div>
-      </div></div>`;
+      </div>
+      ${kids.length > 1 ? `<button type="button" class="w-del" data-del="${i}" aria-label="הסרת ${escS(k.name) || 'הילד/ה'}" title="הסרה">✕</button>` : ''}
+    </div>`;
 
   function draw() {
     dlg.innerHTML = `<form class="panel">
@@ -1442,10 +1513,22 @@ function openWelcome(current, onDone) {
       <div class="hint">כל בוקר נראה להם מה ללבוש לפי מזג האוויר. אפשר לשנות הכול אחר כך בלחיצה ארוכה על ⚙.</div>
       <div class="w-list">${kids.map(row).join('')}</div>
       ${kids.length < MAX_KIDS ? '<button type="button" class="add">+ עוד ילד/ה</button>' : ''}
+      <fieldset class="w-hours"><legend>מתי יוצאים וחוזרים?</legend>
+        <label>יוצאים מהבית <select id="w-leave">${hourOpts(hours.leaveHour, 5, 12)}</select></label>
+        <label>חוזרים הביתה <select id="w-return">${hourOpts(hours.returnHour, 10, 20)}</select></label>
+        <div class="hint">הבגדים נבחרים לפי מזג האוויר בשעות האלה.</div>
+      </fieldset>
+      <div class="hint">📍 בלחיצה על "מתחילים" הדפדפן יבקש גישה למיקום – כדי להביא את התחזית של המקום שלכם. בלי מיקום נשתמש בתל אביב.</div>
       <div class="actions"><button type="submit" class="save">יאללה, מתחילים</button></div>
     </form>`;
   }
-  const sync = () => dlg.querySelectorAll('input[data-f]').forEach((el) => {
+  const sync = () => {
+    const l = dlg.querySelector('#w-leave'), r = dlg.querySelector('#w-return');
+    if (l) hours.leaveHour = Number(l.value);
+    if (r) hours.returnHour = Number(r.value);
+    syncKids();
+  };
+  const syncKids = () => dlg.querySelectorAll('input[data-f]').forEach((el) => {
     const k = kids[+el.dataset.i];
     if (el.dataset.f === 'name') k.name = el.value.trim();
     else k.age = Math.max(2, Math.min(14, Number(el.value) || k.age));
@@ -1476,8 +1559,9 @@ function openWelcome(current, onDone) {
   dlg.addEventListener('submit', (e) => {
     e.preventDefault();
     sync();
+    if (hours.returnHour <= hours.leaveHour) hours.returnHour = hours.leaveHour + 1;
     dlg.remove();
-    onDone(kids);
+    onDone({ kids, ...hours });
   });
   draw();
   dlg.querySelector('#w-name-0')?.focus();
@@ -1508,27 +1592,24 @@ const now = () => {
 };
 
 // ---------- helpers ----------
-const STOPS = [[0, '#6f8fe8'], [8, '#7fb3f0'], [14, '#8fd6c8'], [19, '#a5dc7c'], [24, '#f7cf4f'], [29, '#f59f4c'], [34, '#e8604c']];
-function tempColor(t) {
-  if (t <= STOPS[0][0]) return STOPS[0][1];
-  for (let i = 1; i < STOPS.length; i++) {
-    if (t <= STOPS[i][0]) {
-      const [t0, c0] = STOPS[i - 1], [t1, c1] = STOPS[i];
-      return mix(c0, c1, (t - t0) / (t1 - t0));
-    }
-  }
-  return STOPS[STOPS.length - 1][1];
-}
-function mix(a, b, k) {
-  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
-  const ch = (s) => Math.round(((pa >> s) & 255) * (1 - k) + ((pb >> s) & 255) * k);
-  return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
-}
-const hh = (h) => `${String(h).padStart(2, '0')}:00`;
+// one colour per feel level (freezing → very hot), so the chip colour, the word
+// and the clothes all follow the same rules table
+const LEVEL_COLORS = ['#6f8fe8', '#7fb3f0', '#8fd6c8', '#b5df8a', '#f7cf4f', '#f59f4c', '#e8604c'];
+const levelColor = (t) => {
+  const i = levelIndex(t, settings.rules), n = settings.rules.levels.length;
+  return LEVEL_COLORS[Math.round((i / Math.max(1, n - 1)) * (LEVEL_COLORS.length - 1))];
+};
 const deg = (t) => `${Math.round(t)}°`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const PHASES = ['בוקר', 'צהריים', 'ערב'];
+// name a part of the day by the hours it covers
+function phaseName(from, to) {
+  const mid = (from + to) / 2;
+  if (mid < 11) return 'בוקר';
+  if (mid < 14) return 'צהריים';
+  if (mid < 18) return 'אחה״צ';
+  return 'ערב';
+}
 
 // a word for how it feels outside (the level names from the rules table)
 const feelWord = (t) => LEVEL_NAMES[levelIndex(t, settings.rules)];
@@ -1562,7 +1643,7 @@ function render() {
   const night = hour >= settings.nightStart || hour < settings.nightEnd;
   document.body.classList.toggle('tomorrow', tomorrow);
   document.body.classList.toggle('night', night && Date.now() > state.wakeUntil);
-  manageWakeLock(night);
+  manageWakeLock();
 
   const day = DEMO ? (DEMO_DAY || demoDay(DEMO, DEMO_RAIN)) : state.forecast?.days?.[key];
   const kids = settings.kids.length ? settings.kids : [];
@@ -1574,7 +1655,7 @@ function render() {
   } else {
     const win = day.filter((h) => h.hour >= settings.leaveHour && h.hour <= settings.returnHour);
     body = timeline(win, readers) +
-      scene(kids, planOutfit(win, 0, settings.rules));
+      scene(kids, planOutfit(win, 0, settings.rules), tomorrow);
   }
   app.innerHTML = header(tomorrow, date, readers) + body;
   bindGear();
@@ -1584,28 +1665,33 @@ function header(tomorrow, date, readers) {
   const badge = tomorrow
     ? `<div class="day-badge moon">${weatherIcon('clear', true)}${readers ? `<span>מחר · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`
     : `<div class="day-badge">${weatherIcon('clear')}${readers ? `<span>היום · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`;
-  const locName = DEMO ? `נתוני דוגמה · ${DEMO_LABEL}` : state.loc?.name || '';
+  // the city name comes from a separate service; if it's unavailable, still say where
+  const locName = DEMO ? `דמו: ${DEMO}` : state.loc?.name || (state.loc ? (state.loc.source === 'default' ? 'תל אביב' : 'המיקום שלך') : '');
   const stale = state.forecast?.stale || state.error ? '<i class="stale" title="אין חיבור – מציג נתונים שמורים"></i>' : '';
   return `<header class="top">${badge}<div class="where">${stale}<span>${esc(locName)}</span><button class="gear" aria-label="הגדרות (לחיצה ארוכה)">⚙</button></div></header>`;
 }
 
 // Three tiles: morning / noon / evening of the hours the kids are out.
 function timeline(win, readers) {
-  const tiles = phasesOf(win).map((ph, i) => {
+  const tiles = phasesOf(win).map((ph) => {
     const rainy = ph.filter((x) => isRainy(x, settings.rules));
     const h = rainy.length ? rainy.reduce((a, b) => (b.precip > a.precip ? b : a)) : ph[Math.floor(ph.length / 2)];
     let kind = iconKind(h);
-    if (rainy.length && !['rain', 'drizzle', 'storm', 'snow'].includes(kind)) kind = 'rain';
-    // show the coldest (feels-like) hour of this part of the day: that is the
-    // hour the clothes are chosen for, so the tile and the outfit agree
+    if (rainy.length) {
+      // light rain draws fewer drops than heavy rain
+      const mm = ph.reduce((t, x) => t + (x.precip || 0), 0);
+      if (!['storm', 'snow'].includes(kind)) kind = mm >= 2 ? 'rain' : 'drizzle';
+    }
+    // show the coldest feels-like hour of this part of the day: that is the
+    // hour the clothes are chosen for, so number, word, colour and outfit agree
     const cold = ph.reduce((a, b) => (b.feels < a.feels ? b : a));
-    const temp = Math.round(cold.temp);
     const feels = cold.feels;
     const pop = Math.max(...ph.map((x) => x.pop));
+    const from = ph[0].hour, to = ph[ph.length - 1].hour + 1;
     return `<div class="phase">` +
       weatherIcon(kind, !h.day) +
-      `<div class="ptext"><span class="pname">${PHASES[i] || ''}</span>` +
-      `<div class="tchip" style="background:${tempColor(feels)}"><bdi dir="ltr">${temp}°</bdi></div>` +
+      `<div class="ptext"><span class="pname">${phaseName(from, to)} <span class="phours"><bdi dir="ltr">${from}–${to}</bdi></span></span>` +
+      `<div class="tchip" style="background:${levelColor(feels)}"><bdi dir="ltr">${Math.round(feels)}°</bdi></div>` +
       `<span class="pfeel">${feelWord(feels)}</span>` +
       (rainy.length ? `<div class="pop">💧 ${pop}%</div>` : '') +
       `</div></div>`;
@@ -1615,7 +1701,7 @@ function timeline(win, readers) {
 
 // All the kids together, dressed alike for leaving the house, with one row of
 // clothing cards and one bag for what's needed later.
-function scene(kids, plan) {
+function scene(kids, plan, tomorrow) {
   if (!plan) return '';
   const m = plan.morning;
   const tint = kids[0]?.color;
@@ -1628,10 +1714,11 @@ function scene(kids, plan) {
   const card = (id) => `<div class="card">${itemIcon(id, tint)}<div class="clabel">${LABELS[id] || ''}</div></div>`;
   const worn = [m.shirt, m.bottom, m.shoes, ...m.layers, ...m.acc];
   const bag = plan.bag.length
-    ? `<div class="bag"><div class="bag-title">לשים בתיק</div><div class="bag-items">${plan.bag.map(card).join('')}</div>` +
+    ? `<div class="bag"><div class="bag-title">לקחת איתך</div><div class="bag-items">${plan.bag.map(card).join('')}</div>` +
       `<div class="bag-arrow">⬇</div><div class="bag-icon">${itemIcon('backpack')}</div></div>`
     : '';
-  return `<main class="scene kids-${kids.length}"><div class="scene-body"><div class="figs">${figs}</div>${bag}</div>` +
+  const ribbon = tomorrow ? `<div class="tomorrow-ribbon">${weatherIcon('clear', true)}<span>מחר בבוקר</span></div>` : '';
+  return `<main class="scene kids-${kids.length}">${ribbon}<div class="scene-body"><div class="figs">${figs}</div>${bag}</div>` +
     `<div class="items">${worn.map(card).join('')}</div></main>`;
 }
 
@@ -1639,12 +1726,19 @@ function scene(kids, plan) {
 function bindGear() {
   const g = app.querySelector('.gear');
   if (!g) return;
-  let t;
-  const start = (e) => { e.preventDefault(); g.classList.add('pressing'); t = setTimeout(() => { g.classList.remove('pressing'); showSettings(); }, 1200); };
-  const cancel = () => { clearTimeout(t); g.classList.remove('pressing'); };
-  g.addEventListener('pointerdown', start);
+  let t = null, x0 = 0, y0 = 0;
+  const cancel = () => { clearTimeout(t); t = null; g.classList.remove('pressing'); };
+  g.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    x0 = e.clientX; y0 = e.clientY;
+    g.setPointerCapture?.(e.pointerId);
+    g.classList.add('pressing'); // CSS draws a ring that fills while held
+    t = setTimeout(() => { cancel(); showSettings(); }, 1200);
+  });
+  // a small wobble of the finger shouldn't cancel the press
+  g.addEventListener('pointermove', (e) => { if (t && Math.hypot(e.clientX - x0, e.clientY - y0) > 20) cancel(); });
   g.addEventListener('pointerup', cancel);
-  g.addEventListener('pointerleave', cancel);
+  g.addEventListener('pointercancel', cancel);
   g.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
@@ -1656,18 +1750,15 @@ function showSettings() {
   });
 }
 
-// ---------- screen: keep awake by day, dim at night ----------
+// ---------- screen: always on, dimmed by an overlay at night ----------
+// (releasing the wake lock at night would let Android lock the tablet, and a
+// tap would then land on the lock screen instead of showing tomorrow)
 let lock = null;
-async function manageWakeLock(night) {
-  if (!('wakeLock' in navigator)) return;
+async function manageWakeLock() {
+  if (!('wakeLock' in navigator) || lock || document.visibilityState !== 'visible') return;
   try {
-    if (!night && !lock && document.visibilityState === 'visible') {
-      lock = await navigator.wakeLock.request('screen');
-      lock.addEventListener('release', () => { lock = null; });
-    } else if (night && lock) {
-      await lock.release();
-      lock = null;
-    }
+    lock = await navigator.wakeLock.request('screen');
+    lock.addEventListener('release', () => { lock = null; });
   } catch { /* not allowed right now */ }
 }
 
@@ -1689,10 +1780,10 @@ setInterval(refresh, 30 * 60_000);
 
 
 function showWelcome() {
-  openWelcome(settings, (kids) => {
-    settings = { ...settings, kids, configured: true };
+  openWelcome(settings, ({ kids, leaveHour, returnHour }) => {
+    settings = { ...settings, kids, leaveHour, returnHour, configured: true };
     save(settings);
-    refresh();
+    refresh(); // the location prompt appears now, after the welcome explained it
   });
 }
 

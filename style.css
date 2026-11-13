@@ -55,6 +55,7 @@ body.tomorrow {
   min-height: 40px;
 }
 .day-badge {
+  white-space: nowrap;
   display: flex;
   align-items: center;
   gap: .6em;
@@ -68,8 +69,9 @@ body.tomorrow {
   display: flex;
   align-items: center;
   gap: .5em;
-  color: var(--muted);
-  font-size: clamp(12px, 1.8vh, 18px);
+  color: var(--ink);
+  opacity: .75;
+  font-size: clamp(14px, 2.1vh, 20px);
 }
 .tomorrow .where { color: #c7c9ec; }
 .stale { width: .7em; height: .7em; border-radius: 50%; background: #f0b44b; display: inline-block; }
@@ -83,15 +85,30 @@ body.tomorrow {
   border-radius: 50%;
   touch-action: none;
 }
-.gear.pressing { opacity: 1; background: rgba(240,138,75,.25); transition: background 1.2s; }
+.gear { position: relative; width: 56px; height: 56px; display: grid; place-items: center; }
+/* a ring that fills while the gear is held */
+@property --p { syntax: '<number>'; inherits: false; initial-value: 0; }
+.gear::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) calc(var(--p) * 1%), rgba(0,0,0,.08) 0);
+  -webkit-mask: radial-gradient(circle, transparent 58%, #000 60%);
+  mask: radial-gradient(circle, transparent 58%, #000 60%);
+  opacity: 0;
+}
+.gear.pressing { opacity: 1; }
+.gear.pressing::before { opacity: 1; animation: gear-fill 1.2s linear forwards; }
+@keyframes gear-fill { to { --p: 100; } }
 
 /* ---------- timeline: morning / noon / evening ---------- */
 .timeline {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.4vw;
-  height: 16vh;
-  min-height: 90px;
+  height: 13.5vh;
+  min-height: 88px;
 }
 .phase {
   display: flex;
@@ -105,8 +122,9 @@ body.tomorrow {
   border: 3px solid var(--edge);
 }
 .phase .sky-svg { height: clamp(28px, 7vh, 70px); width: auto; flex: none; }
-.phase .wx-svg { height: clamp(44px, 12vh, 120px); width: auto; flex: none; }
-.ptext { display: flex; flex-direction: column; align-items: center; gap: .6vh; }
+.phase .wx-svg { height: clamp(40px, 9vh, 100px); width: auto; flex: none; }
+.ptext { display: flex; flex-direction: column; align-items: center; gap: .4vh; }
+.phours { font-weight: 500; font-size: .62em; color: var(--muted); }
 .pname { font-weight: 700; font-size: clamp(14px, 2.4vh, 26px); line-height: 1; }
 .tchip {
   min-width: 9vh;
@@ -121,7 +139,7 @@ body.tomorrow {
   place-items: center;
 }
 .pfeel { font-weight: 700; font-size: clamp(13px, 2.2vh, 24px); line-height: 1; }
-.pop { font-size: clamp(12px, 2vh, 20px); color: #3d8fe0; font-weight: 700; line-height: 1; }
+.pop { font-size: clamp(12px, 2vh, 20px); color: #1f6fbf; font-weight: 700; line-height: 1; }
 
 /* ---------- the scene: all kids together ---------- */
 .scene {
@@ -230,8 +248,8 @@ body.tomorrow {
   margin-top: .6vh;
   border-top: 3px dotted var(--edge);
 }
-.items .card { width: auto; flex: 0 1 clamp(50px, 10vh, 112px); min-width: min-content; }
-.items .clabel { font-size: clamp(10px, 1.6vh, 16px); }
+.items .card { width: auto; flex: 0 1 clamp(70px, 14.5vh, 160px); min-width: min-content; }
+.items .clabel { font-size: clamp(13px, 2.3vh, 22px); font-weight: 700; }
 
 
 
@@ -366,3 +384,51 @@ legend { font-weight: 700; padding: 0 6px; }
 .w-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 .panel .w-fields input[data-f=name] { font-size: 22px; width: 100%; }
 .panel .w-age { justify-content: flex-start; margin: 0; }
+
+/* tomorrow (evening) mode: unmistakable even without reading */
+.tomorrow .day-badge { font-size: clamp(20px, 4.2vh, 44px); }
+.tomorrow .scene { background: #ecebff; border-color: #b9b3e0; position: relative; }
+.tomorrow-ribbon {
+  position: absolute;
+  top: 1.2vh;
+  inset-inline-start: 50%;
+  transform: translateX(50%);
+  display: flex;
+  align-items: center;
+  gap: .4em;
+  padding: .2em 1em .2em .6em;
+  border-radius: 99px;
+  background: #2f3c6e;
+  color: #fff4c2;
+  font-weight: 700;
+  font-size: clamp(18px, 3.4vh, 36px);
+  z-index: 1;
+}
+.tomorrow-ribbon .wx-svg { height: 1.6em; width: auto; }
+
+/* settings: controls next to their labels, bigger checkboxes */
+.panel fieldset > label { max-width: 560px; }
+.rules input[type=checkbox] { width: 30px; height: 30px; }
+
+/* welcome: remove button tucked in the corner */
+.w-kid { position: relative; padding-inline-end: 40px; }
+.w-del {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  width: 30px; height: 30px;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--muted) !important;
+  font-size: 16px !important;
+}
+.w-hours { margin-top: 14px; }
+
+@media (max-width: 700px) {
+  .bag-arrow { transform: rotate(90deg); } /* the bag row runs sideways on phones */
+  .items { gap: 4px; }
+  .items .card { flex: 1 1 0; min-width: 0; max-width: 76px; }
+  .items .clabel { font-size: 12px; }
+  .tomorrow-ribbon { position: static; transform: none; align-self: center; margin-bottom: 6px; font-size: 18px; }
+}

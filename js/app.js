@@ -26,27 +26,24 @@ const now = () => {
 };
 
 // ---------- helpers ----------
-const STOPS = [[0, '#6f8fe8'], [8, '#7fb3f0'], [14, '#8fd6c8'], [19, '#a5dc7c'], [24, '#f7cf4f'], [29, '#f59f4c'], [34, '#e8604c']];
-function tempColor(t) {
-  if (t <= STOPS[0][0]) return STOPS[0][1];
-  for (let i = 1; i < STOPS.length; i++) {
-    if (t <= STOPS[i][0]) {
-      const [t0, c0] = STOPS[i - 1], [t1, c1] = STOPS[i];
-      return mix(c0, c1, (t - t0) / (t1 - t0));
-    }
-  }
-  return STOPS[STOPS.length - 1][1];
-}
-function mix(a, b, k) {
-  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
-  const ch = (s) => Math.round(((pa >> s) & 255) * (1 - k) + ((pb >> s) & 255) * k);
-  return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
-}
-const hh = (h) => `${String(h).padStart(2, '0')}:00`;
+// one colour per feel level (freezing → very hot), so the chip colour, the word
+// and the clothes all follow the same rules table
+const LEVEL_COLORS = ['#6f8fe8', '#7fb3f0', '#8fd6c8', '#b5df8a', '#f7cf4f', '#f59f4c', '#e8604c'];
+const levelColor = (t) => {
+  const i = levelIndex(t, settings.rules), n = settings.rules.levels.length;
+  return LEVEL_COLORS[Math.round((i / Math.max(1, n - 1)) * (LEVEL_COLORS.length - 1))];
+};
 const deg = (t) => `${Math.round(t)}°`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const PHASES = ['בוקר', 'צהריים', 'ערב'];
+// name a part of the day by the hours it covers
+function phaseName(from, to) {
+  const mid = (from + to) / 2;
+  if (mid < 11) return 'בוקר';
+  if (mid < 14) return 'צהריים';
+  if (mid < 18) return 'אחה״צ';
+  return 'ערב';
+}
 
 // a word for how it feels outside (the level names from the rules table)
 const feelWord = (t) => LEVEL_NAMES[levelIndex(t, settings.rules)];
@@ -80,7 +77,7 @@ function render() {
   const night = hour >= settings.nightStart || hour < settings.nightEnd;
   document.body.classList.toggle('tomorrow', tomorrow);
   document.body.classList.toggle('night', night && Date.now() > state.wakeUntil);
-  manageWakeLock(night);
+  manageWakeLock();
 
   const day = DEMO ? demoDay(DEMO) : state.forecast?.days?.[key];
   const kids = settings.kids.length ? settings.kids : [];
@@ -92,7 +89,7 @@ function render() {
   } else {
     const win = day.filter((h) => h.hour >= settings.leaveHour && h.hour <= settings.returnHour);
     body = timeline(win, readers) +
-      scene(kids, planOutfit(win, 0, settings.rules));
+      scene(kids, planOutfit(win, 0, settings.rules), tomorrow);
   }
   app.innerHTML = header(tomorrow, date, readers) + body;
   bindGear();
@@ -102,28 +99,33 @@ function header(tomorrow, date, readers) {
   const badge = tomorrow
     ? `<div class="day-badge moon">${weatherIcon('clear', true)}${readers ? `<span>מחר · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`
     : `<div class="day-badge">${weatherIcon('clear')}${readers ? `<span>היום · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`;
-  const locName = DEMO ? `דמו: ${DEMO}` : state.loc?.name || '';
+  // the city name comes from a separate service; if it's unavailable, still say where
+  const locName = DEMO ? `דמו: ${DEMO}` : state.loc?.name || (state.loc ? (state.loc.source === 'default' ? 'תל אביב' : 'המיקום שלך') : '');
   const stale = state.forecast?.stale || state.error ? '<i class="stale" title="אין חיבור – מציג נתונים שמורים"></i>' : '';
   return `<header class="top">${badge}<div class="where">${stale}<span>${esc(locName)}</span><button class="gear" aria-label="הגדרות (לחיצה ארוכה)">⚙</button></div></header>`;
 }
 
 // Three tiles: morning / noon / evening of the hours the kids are out.
 function timeline(win, readers) {
-  const tiles = phasesOf(win).map((ph, i) => {
+  const tiles = phasesOf(win).map((ph) => {
     const rainy = ph.filter((x) => isRainy(x, settings.rules));
     const h = rainy.length ? rainy.reduce((a, b) => (b.precip > a.precip ? b : a)) : ph[Math.floor(ph.length / 2)];
     let kind = iconKind(h);
-    if (rainy.length && !['rain', 'drizzle', 'storm', 'snow'].includes(kind)) kind = 'rain';
-    // show the coldest (feels-like) hour of this part of the day: that is the
-    // hour the clothes are chosen for, so the tile and the outfit agree
+    if (rainy.length) {
+      // light rain draws fewer drops than heavy rain
+      const mm = ph.reduce((t, x) => t + (x.precip || 0), 0);
+      if (!['storm', 'snow'].includes(kind)) kind = mm >= 2 ? 'rain' : 'drizzle';
+    }
+    // show the coldest feels-like hour of this part of the day: that is the
+    // hour the clothes are chosen for, so number, word, colour and outfit agree
     const cold = ph.reduce((a, b) => (b.feels < a.feels ? b : a));
-    const temp = Math.round(cold.temp);
     const feels = cold.feels;
     const pop = Math.max(...ph.map((x) => x.pop));
+    const from = ph[0].hour, to = ph[ph.length - 1].hour + 1;
     return `<div class="phase">` +
       weatherIcon(kind, !h.day) +
-      `<div class="ptext"><span class="pname">${PHASES[i] || ''}</span>` +
-      `<div class="tchip" style="background:${tempColor(feels)}"><bdi dir="ltr">${temp}°</bdi></div>` +
+      `<div class="ptext"><span class="pname">${phaseName(from, to)} <span class="phours"><bdi dir="ltr">${from}–${to}</bdi></span></span>` +
+      `<div class="tchip" style="background:${levelColor(feels)}"><bdi dir="ltr">${Math.round(feels)}°</bdi></div>` +
       `<span class="pfeel">${feelWord(feels)}</span>` +
       (rainy.length ? `<div class="pop">💧 ${pop}%</div>` : '') +
       `</div></div>`;
@@ -133,7 +135,7 @@ function timeline(win, readers) {
 
 // All the kids together, dressed alike for leaving the house, with one row of
 // clothing cards and one bag for what's needed later.
-function scene(kids, plan) {
+function scene(kids, plan, tomorrow) {
   if (!plan) return '';
   const m = plan.morning;
   const tint = kids[0]?.color;
@@ -146,10 +148,11 @@ function scene(kids, plan) {
   const card = (id) => `<div class="card">${itemIcon(id, tint)}<div class="clabel">${LABELS[id] || ''}</div></div>`;
   const worn = [m.shirt, m.bottom, m.shoes, ...m.layers, ...m.acc];
   const bag = plan.bag.length
-    ? `<div class="bag"><div class="bag-title">לשים בתיק</div><div class="bag-items">${plan.bag.map(card).join('')}</div>` +
+    ? `<div class="bag"><div class="bag-title">לקחת איתך</div><div class="bag-items">${plan.bag.map(card).join('')}</div>` +
       `<div class="bag-arrow">⬇</div><div class="bag-icon">${itemIcon('backpack')}</div></div>`
     : '';
-  return `<main class="scene kids-${kids.length}"><div class="scene-body"><div class="figs">${figs}</div>${bag}</div>` +
+  const ribbon = tomorrow ? `<div class="tomorrow-ribbon">${weatherIcon('clear', true)}<span>מחר בבוקר</span></div>` : '';
+  return `<main class="scene kids-${kids.length}">${ribbon}<div class="scene-body"><div class="figs">${figs}</div>${bag}</div>` +
     `<div class="items">${worn.map(card).join('')}</div></main>`;
 }
 
@@ -157,12 +160,19 @@ function scene(kids, plan) {
 function bindGear() {
   const g = app.querySelector('.gear');
   if (!g) return;
-  let t;
-  const start = (e) => { e.preventDefault(); g.classList.add('pressing'); t = setTimeout(() => { g.classList.remove('pressing'); showSettings(); }, 1200); };
-  const cancel = () => { clearTimeout(t); g.classList.remove('pressing'); };
-  g.addEventListener('pointerdown', start);
+  let t = null, x0 = 0, y0 = 0;
+  const cancel = () => { clearTimeout(t); t = null; g.classList.remove('pressing'); };
+  g.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    x0 = e.clientX; y0 = e.clientY;
+    g.setPointerCapture?.(e.pointerId);
+    g.classList.add('pressing'); // CSS draws a ring that fills while held
+    t = setTimeout(() => { cancel(); showSettings(); }, 1200);
+  });
+  // a small wobble of the finger shouldn't cancel the press
+  g.addEventListener('pointermove', (e) => { if (t && Math.hypot(e.clientX - x0, e.clientY - y0) > 20) cancel(); });
   g.addEventListener('pointerup', cancel);
-  g.addEventListener('pointerleave', cancel);
+  g.addEventListener('pointercancel', cancel);
   g.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
@@ -174,18 +184,15 @@ function showSettings() {
   });
 }
 
-// ---------- screen: keep awake by day, dim at night ----------
+// ---------- screen: always on, dimmed by an overlay at night ----------
+// (releasing the wake lock at night would let Android lock the tablet, and a
+// tap would then land on the lock screen instead of showing tomorrow)
 let lock = null;
-async function manageWakeLock(night) {
-  if (!('wakeLock' in navigator)) return;
+async function manageWakeLock() {
+  if (!('wakeLock' in navigator) || lock || document.visibilityState !== 'visible') return;
   try {
-    if (!night && !lock && document.visibilityState === 'visible') {
-      lock = await navigator.wakeLock.request('screen');
-      lock.addEventListener('release', () => { lock = null; });
-    } else if (night && lock) {
-      await lock.release();
-      lock = null;
-    }
+    lock = await navigator.wakeLock.request('screen');
+    lock.addEventListener('release', () => { lock = null; });
   } catch { /* not allowed right now */ }
 }
 
@@ -208,13 +215,12 @@ setInterval(refresh, 30 * 60_000);
 if ('serviceWorker' in navigator && !DEMO) navigator.serviceWorker.register('sw.js').catch(() => {});
 
 function showWelcome() {
-  openWelcome(settings, (kids) => {
-    settings = { ...settings, kids, configured: true };
+  openWelcome(settings, ({ kids, leaveHour, returnHour }) => {
+    settings = { ...settings, kids, leaveHour, returnHour, configured: true };
     save(settings);
-    refresh();
+    refresh(); // the location prompt appears now, after the welcome explained it
   });
 }
 
 render();
-refresh();
-if (!settings.configured && !DEMO) showWelcome();
+if (!settings.configured && !DEMO) showWelcome(); else refresh();

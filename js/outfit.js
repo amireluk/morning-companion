@@ -27,7 +27,8 @@ export const defaultRules = () => ({
     lvl(29, 'tee', 'shorts', 'sneakers', { cap: true }), // warm
     lvl(null, 'tee', 'shorts', 'sandals', { cap: true }), // hot
   ],
-  rain: { chance: 50, bootsMm: 6 },
+  // boots: 'heavy' (at least bootsMm of rain in the day), 'any' rain, or 'never'
+  rain: { chance: 50, boots: 'heavy', bootsMm: 6 },
 });
 
 // Make a stored rules object safe to use (missing fields fall back to defaults).
@@ -78,7 +79,9 @@ export function planOutfit(hours, offset = 0, rules = defaultRules()) {
   const coldPart = C.sweatshirt || C.coat;
   const shirt = P.shirt === 'tee' ? 'tee' : 'longsleeve';
   const bottom = P.bottom === 'shorts' && !coldPart ? 'shorts' : 'pants';
-  const shoes = totalMm >= rules.rain.bootsMm ? 'boots'
+  const bootsOn = rules.rain.boots === 'any' ? anyRain
+    : rules.rain.boots === 'never' ? false : totalMm >= rules.rain.bootsMm;
+  const shoes = bootsOn ? 'boots'
     : P.shoes === 'sandals' && !anyRain && C.bottom === 'shorts' ? 'sandals' : 'sneakers';
 
   const raw = phasesOf(hours).map((ph) => {

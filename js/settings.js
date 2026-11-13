@@ -64,9 +64,9 @@ export function openSettings(current, onSave) {
       <div class="rules-wrap"><table class="rules">
         <thead><tr><th>תחושה</th><th>טמפ׳</th>${head('tee', 'חולצה')}${head('pants', 'מכנס')}${head('sneakers', 'נעליים')}${head('sweatshirt', 'סווטשירט')}${head('coat', 'מעיל')}${head('beanie', 'כובע צמר, צעיף, כפפות')}${head('cap', 'כובע שמש')}</tr></thead>
         <tbody>${rows}</tbody></table></div>
-      <div class="hint">חולצה, מכנס ונעליים נבחרים לפי השעה החמה ביום. סווטשירט, מעיל ובגדי חורף – לפי כל חלק ביום (מה שצריך רק אחר כך נכנס לתיק). מכנס קצר וסנדלים רק אם גם השעה הקרה לא דורשת סווטשירט.</div>
+      <div class="hint">חולצה, מכנס ונעליים – לפי השעה החמה ביום. סווטשירט, מעיל ובגדי חורף – לפי השעה הקרה. מה שצריך רק בהמשך היום מופיע ב"לקחת איתך".</div>
       <label>מטריה כשסיכוי הגשם לפחות <span><input type="number" min="0" max="100" data-rain="chance" value="${R.rain.chance}"> %</span></label>
-      <label>מגפיים כשצפוי לפחות <span><input type="number" min="0" step="0.5" data-rain="bootsMm" value="${R.rain.bootsMm}"> מ״מ גשם ביום</span></label>
+      <label>מגפיי גשם <select data-rain="boots">${[['heavy', 'רק בגשם חזק'], ['any', 'בכל גשם'], ['never', 'אף פעם']].map(([v, t]) => `<option value="${v}"${R.rain.boots === v ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
       <button type="button" class="reset-rules">החזרת ברירת המחדל</button>
     </fieldset>`;
   }
@@ -137,7 +137,7 @@ export function openSettings(current, onSave) {
       }
       return;
     }
-    if (el.dataset.rain) { s.rules.rain[el.dataset.rain] = Number(el.value); return; }
+    if (el.dataset.rain) { s.rules.rain[el.dataset.rain] = el.dataset.rain === 'boots' ? el.value : Number(el.value); return; }
     const f = el.dataset.f;
     if (!f) return;
     if (el.dataset.k != null) {
@@ -186,6 +186,7 @@ export function openSettings(current, onSave) {
 // First load: a short, friendly screen that asks who the kids are.
 export function openWelcome(current, onDone) {
   const kids = structuredClone(current.kids && current.kids.length ? current.kids : [newKid(0)]);
+  const hours = { leaveHour: current.leaveHour ?? 8, returnHour: current.returnHour ?? 17 };
   const dlg = document.createElement('div');
   dlg.className = 'settings welcome';
   document.body.appendChild(dlg);
@@ -198,9 +199,10 @@ export function openWelcome(current, onDone) {
         <div class="row">
           <button type="button" class="pill${k.look === 'boy' ? ' on' : ''}" data-i="${i}" data-look="boy">ילד</button>
           <button type="button" class="pill${k.look === 'girl' ? ' on' : ''}" data-i="${i}" data-look="girl">ילדה</button>
-          ${kids.length > 1 ? `<button type="button" class="remove" data-del="${i}" aria-label="הסרה">✕</button>` : ''}
         </div>
-      </div></div>`;
+      </div>
+      ${kids.length > 1 ? `<button type="button" class="w-del" data-del="${i}" aria-label="הסרת ${esc(k.name) || 'הילד/ה'}" title="הסרה">✕</button>` : ''}
+    </div>`;
 
   function draw() {
     dlg.innerHTML = `<form class="panel">
@@ -208,10 +210,22 @@ export function openWelcome(current, onDone) {
       <div class="hint">כל בוקר נראה להם מה ללבוש לפי מזג האוויר. אפשר לשנות הכול אחר כך בלחיצה ארוכה על ⚙.</div>
       <div class="w-list">${kids.map(row).join('')}</div>
       ${kids.length < MAX_KIDS ? '<button type="button" class="add">+ עוד ילד/ה</button>' : ''}
+      <fieldset class="w-hours"><legend>מתי יוצאים וחוזרים?</legend>
+        <label>יוצאים מהבית <select id="w-leave">${hourOpts(hours.leaveHour, 5, 12)}</select></label>
+        <label>חוזרים הביתה <select id="w-return">${hourOpts(hours.returnHour, 10, 20)}</select></label>
+        <div class="hint">הבגדים נבחרים לפי מזג האוויר בשעות האלה.</div>
+      </fieldset>
+      <div class="hint">📍 בלחיצה על "מתחילים" הדפדפן יבקש גישה למיקום – כדי להביא את התחזית של המקום שלכם. בלי מיקום נשתמש בתל אביב.</div>
       <div class="actions"><button type="submit" class="save">יאללה, מתחילים</button></div>
     </form>`;
   }
-  const sync = () => dlg.querySelectorAll('input[data-f]').forEach((el) => {
+  const sync = () => {
+    const l = dlg.querySelector('#w-leave'), r = dlg.querySelector('#w-return');
+    if (l) hours.leaveHour = Number(l.value);
+    if (r) hours.returnHour = Number(r.value);
+    syncKids();
+  };
+  const syncKids = () => dlg.querySelectorAll('input[data-f]').forEach((el) => {
     const k = kids[+el.dataset.i];
     if (el.dataset.f === 'name') k.name = el.value.trim();
     else k.age = Math.max(2, Math.min(14, Number(el.value) || k.age));
@@ -242,8 +256,9 @@ export function openWelcome(current, onDone) {
   dlg.addEventListener('submit', (e) => {
     e.preventDefault();
     sync();
+    if (hours.returnHour <= hours.leaveHour) hours.returnHour = hours.leaveHour + 1;
     dlg.remove();
-    onDone(kids);
+    onDone({ kids, ...hours });
   });
   draw();
   dlg.querySelector('#w-name-0')?.focus();
