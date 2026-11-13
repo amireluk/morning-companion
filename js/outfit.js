@@ -19,13 +19,12 @@ export const T = {
   bootsHourMm: 2.5,
   capUv: 6,
   capFeels: 24,
-  sunscreenUv: 7,
 };
 
 export const isRainy = (h) => h.pop >= T.rainChance || h.precip >= T.rainMm;
 
 // Split hours into up to three consecutive phases (morning / midday / afternoon).
-function phasesOf(hours) {
+export function phasesOf(hours) {
   const n = hours.length;
   if (n <= 3) return [hours];
   const a = Math.round(n / 3), b = Math.round((2 * n) / 3);
@@ -44,7 +43,6 @@ export function planOutfit(hours, offset = 0) {
   const anyRain = hours.some(isRainy);
   const totalMm = hours.reduce((s, h) => s + (h.precip || 0), 0);
   const heavy = totalMm >= T.bootsTotalMm || hours.some((h) => h.precip >= T.bootsHourMm);
-  const maxUv = Math.max(...hours.map((h) => h.uv || 0));
 
   const shirt = peak >= T.shortSleeve ? 'tee' : 'longsleeve';
   const bottom = peak >= T.shortsPeak && low >= T.shortsLow ? 'shorts' : 'pants';
@@ -86,30 +84,13 @@ export function planOutfit(hours, offset = 0) {
     s.mood = s.tMin < T.winterGear ? 'cold' : s.tMax >= 30 ? 'hot' : 'ok';
   }
 
-  // transitions between segments: what goes into / comes out of the bag
-  const transitions = [];
-  for (let i = 1; i < segments.length; i++) {
-    const a = segments[i - 1], b = segments[i];
-    const wa = [...a.layers, ...a.acc], wb = [...b.layers, ...b.acc];
-    transitions.push({
-      off: sortItems(wa.filter((x) => !wb.includes(x))),
-      on: sortItems(wb.filter((x) => !wa.includes(x))),
-    });
-  }
+  // what to wear when leaving, and what goes in the bag for later in the day
+  const morning = segments[0];
+  const wornAtStart = new Set([...morning.layers, ...morning.acc]);
+  const bag = sortItems(segments.slice(1).flatMap((s) => [...s.layers, ...s.acc]).filter((id) => !wornAtStart.has(id)));
+  if (peak >= T.bottle) bag.push('bottle');
 
-  // everything the kid needs today, and which of it starts in the backpack
-  const first = segments[0];
-  const wornAtStart = new Set([...first.layers, ...first.acc]);
-  const extras = sortItems(segments.flatMap((s) => [...s.layers, ...s.acc]));
-  const items = [
-    { id: shirt }, { id: bottom }, { id: shoes },
-    ...extras.map((id) => ({ id, bag: !wornAtStart.has(id) })),
-  ];
-  const bottle = peak >= T.bottle;
-  if (bottle) items.push({ id: 'bottle', bag: true });
-  if (maxUv >= T.sunscreenUv) items.push({ id: 'sunscreen' });
-
-  return { peak, low, segments, transitions, items, bottle };
+  return { peak, low, morning, bag, phases: raw };
 }
 
 function sameWear(a, b) {

@@ -21,7 +21,10 @@ export const defaults = () => ({
   switchHour: 17, // from this hour on, show tomorrow
   nightStart: 21,
   nightEnd: 6,
-  kids: [newKid(0)],
+  kids: [
+    { ...newKid(0), name: 'ראם', age: 8, look: 'boy', hair: 1, color: '#7ec8e3' },
+    { ...newKid(1), name: 'סער', age: 4, look: 'boy', hair: 2, color: '#ffcf3f' },
+  ],
   configured: false,
 });
 

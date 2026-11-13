@@ -85,51 +85,42 @@ body.tomorrow {
 }
 .gear.pressing { opacity: 1; background: rgba(240,138,75,.25); transition: background 1.2s; }
 
-/* ---------- timeline ---------- */
+/* ---------- timeline: morning / noon / evening ---------- */
 .timeline {
-  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.4vw;
+  height: 16vh;
+  min-height: 90px;
+}
+.phase {
   display: flex;
-  justify-content: space-between;
-  gap: .4vw;
-  padding: 1vh 1.4vw 1.2vh;
+  align-items: center;
+  justify-content: center;
+  gap: 1vw;
+  min-width: 0;
+  padding: 1vh 1vw;
   border-radius: 26px;
   background: var(--card);
   border: 3px solid var(--edge);
-  height: 17vh;
-  min-height: 96px;
 }
-.timeline::after {
-  content: '';
-  position: absolute;
-  inset: auto 1.4vw .7vh;
-  height: .7vh;
-  border-radius: 99px;
-  background: var(--grad);
-  opacity: .55;
-}
-.hour {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-}
-.hlabel { font-size: clamp(11px, 1.7vh, 18px); color: var(--muted); line-height: 1; }
-.hour .wx-svg { flex: 1; min-height: 0; width: 100%; max-width: 9vh; }
+.phase .sky-svg { height: clamp(28px, 7vh, 70px); width: auto; flex: none; }
+.phase .wx-svg { height: clamp(44px, 12vh, 120px); width: auto; flex: none; }
+.ptext { display: flex; flex-direction: column; align-items: center; gap: .6vh; }
+.pname { font-weight: 700; font-size: clamp(14px, 2.4vh, 26px); line-height: 1; }
 .tchip {
-  min-width: 70%;
-  height: 3.6vh;
-  min-height: 18px;
+  min-width: 9vh;
+  height: 4.4vh;
+  min-height: 22px;
+  padding: 0 .6em;
   border-radius: 99px;
   border: 2.5px solid rgba(61,43,31,.25);
   font-weight: 700;
-  font-size: clamp(12px, 2.1vh, 22px);
+  font-size: clamp(13px, 2.4vh, 26px);
   display: grid;
   place-items: center;
 }
-.pop { height: 2.4vh; font-size: clamp(10px, 1.6vh, 16px); line-height: 2.4vh; }
-.pop small { font-size: .85em; color: #3d8fe0; margin-inline-start: 2px; }
+.pop { font-size: clamp(12px, 2vh, 20px); color: #3d8fe0; font-weight: 700; line-height: 1; }
 
 /* ---------- kids ---------- */
 .kids {
@@ -153,7 +144,7 @@ body.tomorrow {
   background: var(--card);
   border: 3px solid var(--edge);
   border-radius: 30px;
-  padding: 1.4vh 1vw 1.2vh;
+  padding: 1.4vh 1vw;
 }
 .kid-name {
   position: absolute;
@@ -167,88 +158,47 @@ body.tomorrow {
   border: 3px solid var(--ink);
   z-index: 1;
 }
-
-.figures {
+.kid-body {
   flex: 1;
   min-height: 0;
   display: flex;
   align-items: stretch;
   justify-content: center;
-  gap: .5vw;
+  gap: 2vw;
 }
 .fig {
   flex: 0 1 auto;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
+  justify-content: center;
 }
-.fig-cap {
-  display: flex;
-  align-items: center;
-  gap: .4em;
-  height: 6vh;
-  min-height: 30px;
-  flex: none;
-}
-.sky-svg { height: 100%; width: auto; }
-.cap-text { display: flex; flex-direction: column; line-height: 1.1; font-size: clamp(12px, 2vh, 22px); }
-.cap-text span { color: var(--muted); }
 .kid-svg {
-  flex: 1;
-  min-height: 0;
-  max-width: 100%;
-  aspect-ratio: 270 / 390;
   height: 100%;
   width: auto;
+  max-width: 100%;
+  aspect-ratio: 270 / 390;
 }
+.kid-svg.tall { aspect-ratio: 270 / 470; }
 
-.trans {
-  flex: 0 0 auto;
-  width: clamp(70px, 12vh, 150px);
+/* the bag: items needed later, going into the backpack */
+.bag {
+  flex: none;
+  align-self: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: .6vh;
+  gap: 1vh;
+  padding: 1.6vh 1.2vw;
+  border: 3px dashed #e7b77a;
+  border-radius: 26px;
+  background: #fff6ea;
+  max-width: 45%;
 }
-.arrow-svg { width: 100%; height: auto; }
-.move {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  background: #fff3e2;
-  border: 2px dashed #e7c79a;
-  border-radius: 16px;
-  padding: 4px;
-}
-.mini { width: clamp(26px, 5vh, 54px); display: inline-flex; }
-.mini svg { width: 100%; height: auto; }
-.dir { font-size: clamp(14px, 2.4vh, 26px); color: #c9a77c; width: 100%; text-align: center; line-height: 1; }
-.kid-svg.tall { aspect-ratio: 270 / 470; }
-.tr-text { width: 100%; text-align: center; font-size: clamp(11px, 1.7vh, 18px); color: var(--muted); }
-
-@media (orientation: portrait) {
-  .fig { flex: 1 1 0; justify-content: flex-end; }
-  .kid-svg { flex: 0 1 auto; width: 100%; height: auto; max-height: 100%; }
-  .fig-cap { order: 0; }
-  .trans { justify-content: flex-end; padding-bottom: 12vh; }
-}
-
-.items {
-  flex: none;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: .8vw;
-  padding-top: 1vh;
-  border-top: 3px dotted var(--edge);
-}
+.bag-title { font-weight: 700; font-size: clamp(14px, 2.4vh, 26px); color: #b5702f; }
+.bag-items { display: flex; flex-wrap: wrap; justify-content: center; gap: 1vh; }
 .card {
-  position: relative;
-  width: clamp(54px, 10.5vh, 120px);
+  width: clamp(56px, 12vh, 130px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -258,23 +208,13 @@ body.tomorrow {
   padding: 4px;
 }
 .card .item-svg { width: 100%; height: auto; }
-.card.in-bag { border-style: dashed; border-color: #e7b77a; background: #fff8ee; }
-.bag-badge {
-  position: absolute;
-  top: -10px;
-  inset-inline-end: -10px;
-  width: 44%;
-  background: #fff;
-  border: 2.5px solid #e7b77a;
-  border-radius: 50%;
-  padding: 3px;
-  display: flex;
-}
-.bag-badge svg { width: 100%; height: auto; }
-.clabel { font-size: clamp(10px, 1.6vh, 16px); line-height: 1.1; text-align: center; padding-bottom: 2px; }
+.clabel { font-size: clamp(11px, 1.8vh, 18px); line-height: 1.1; text-align: center; padding-bottom: 2px; }
+.bag-arrow { font-size: clamp(18px, 3.4vh, 36px); color: #e7b77a; line-height: 1; }
+.bag-icon { width: clamp(60px, 14vh, 150px); display: flex; }
+.bag-icon svg { width: 100%; height: auto; }
 
-/* multiple kids: shrink item cards a little */
-.kids-3 .card, .kids-4 .card { width: clamp(44px, 8vh, 90px); }
+.kids-3 .card, .kids-4 .card { width: clamp(44px, 9vh, 100px); }
+.kids-3 .bag-icon, .kids-4 .bag-icon { width: clamp(44px, 10vh, 110px); }
 
 .empty {
   flex: 1;
@@ -363,25 +303,18 @@ legend { font-weight: 700; padding: 0 6px; }
   #app { height: auto; min-height: 100%; gap: 10px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
   .top { height: 44px; }
   .day-badge { font-size: 18px; }
-  .timeline { height: auto; min-height: 0; overflow-x: auto; gap: 2px; padding: 8px 8px 12px; border-radius: 18px; }
-  .hour { min-width: 30px; gap: 3px; }
-  .hour .wx-svg { flex: none; height: 28px; }
-  .tchip { height: 20px; font-size: 11px; min-width: 90%; border-width: 2px; }
-  .hlabel { font-size: 11px; }
-  .pop { height: 14px; line-height: 14px; font-size: 10px; }
+  .timeline { height: auto; min-height: 0; gap: 6px; }
+  .phase { flex-direction: column; gap: 4px; padding: 8px 4px; border-radius: 18px; }
+  .phase .sky-svg { height: 26px; }
+  .phase .wx-svg { height: 44px; }
+  .tchip { min-width: 60px; height: 24px; font-size: 13px; }
   .kids { grid-auto-flow: row; grid-auto-rows: auto; grid-auto-columns: auto; gap: 10px; }
-  .kid { padding: 10px 8px; border-radius: 22px; }
+  .kid { padding: 10px; border-radius: 22px; }
   .kid-name { position: static; align-self: flex-start; font-size: 16px; margin-bottom: 4px; }
-  .figures { flex: none; align-items: flex-end; gap: 2px; }
-  .fig { flex: 1 1 0; justify-content: flex-end; }
-  .fig-cap { height: 34px; min-height: 0; }
-  .cap-text { font-size: 12px; }
-  .kid-svg { flex: none; width: 100%; height: auto; max-height: 300px; }
-  .trans { width: 58px; padding-bottom: 20px; justify-content: center; }
-  .mini { width: 22px; }
-  .move { border-radius: 10px; padding: 3px; }
-  .tr-text { font-size: 10px; }
-  .items { gap: 6px; padding-top: 8px; }
+  .kid-body { flex: none; gap: 10px; }
+  .kid-svg { height: 300px; }
+  .bag { padding: 10px 8px; border-radius: 18px; }
   .card, .kids-3 .card, .kids-4 .card { width: 62px; border-radius: 14px; border-width: 2px; }
-  .clabel { font-size: 10px; }
+  .bag-icon { width: 60px; }
+  .clabel { font-size: 11px; }
 }

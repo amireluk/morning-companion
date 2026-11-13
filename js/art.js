@@ -156,7 +156,12 @@ function drawSweatshirt() {
   return shape(TORSO.sweatshirt, c) +
     line('M86,270 Q120,280 154,270', shade(c, -0.15), 4) +
     shape('M100,232 L140,232 L146,262 L94,262 Z', shade(c, -0.08)) +
-    line('M104,146 Q120,160 136,146', shade(c, -0.2), 5);
+    // hood lying on the shoulders (the head is drawn over its top)
+    shape('M80,160 Q72,116 100,108 L140,108 Q168,116 160,160 Q120,180 80,160 Z', c) +
+    shape('M92,158 Q88,126 104,122 L136,122 Q152,126 148,158 Q120,170 92,158 Z', shade(c, -0.18)) +
+    // drawstrings
+    line('M112,166 L109,200 M128,166 L131,200', '#ffffff', 4) +
+    `<circle cx="109" cy="202" r="3.5" fill="#ffffff" stroke="${O}" stroke-width="2"/><circle cx="131" cy="202" r="3.5" fill="#ffffff" stroke="${O}" stroke-width="2"/>`;
 }
 
 function drawCoat() {
@@ -289,9 +294,12 @@ const ICONS = {
   longsleeve: (c) => shape('M32,18 L42,14 Q50,24 58,14 L68,18 L86,66 L75,70 L67,42 L67,88 L33,88 L33,42 L25,70 L14,66 Z', c) +
     line('M35,50 L65,50 M35,62 L65,62 M35,74 L65,74', shade(c, 0.22), 5) +
     `<path d="M32,18 L42,14 Q50,24 58,14 L68,18 L86,66 L75,70 L67,42 L67,88 L33,88 L33,42 L25,70 L14,66 Z" fill="none" stroke="${O}" stroke-width="${SW}" stroke-linejoin="round"/>`,
-  sweatshirt: () => shape('M30,18 L42,13 Q50,22 58,13 L70,18 L88,68 L76,72 L68,44 L68,88 L32,88 L32,44 L24,72 L12,68 Z', COLORS.sweatshirt) +
+  sweatshirt: () => shape('M33,24 Q30,2 50,2 Q70,2 67,24 Q50,34 33,24 Z', COLORS.sweatshirt) +
+    shape('M38,22 Q37,8 50,8 Q63,8 62,22 Q50,28 38,22 Z', shade(COLORS.sweatshirt, -0.2)) +
+    shape('M30,18 L42,13 Q50,22 58,13 L70,18 L88,68 L76,72 L68,44 L68,88 L32,88 L32,44 L24,72 L12,68 Z', COLORS.sweatshirt) +
     shape('M38,60 L62,60 L65,78 L35,78 Z', shade(COLORS.sweatshirt, -0.08)) +
-    line('M33,82 L67,82', shade(COLORS.sweatshirt, -0.15), 4),
+    line('M33,82 L67,82', shade(COLORS.sweatshirt, -0.15), 4) +
+    line('M45,24 L44,44 M55,24 L56,44', '#ffffff', 3),
   coat: () => shape('M28,16 L42,10 Q50,20 58,10 L72,16 L90,72 L77,76 L70,46 L72,94 L28,94 L30,46 L23,76 L10,72 Z', COLORS.coat) +
     line('M50,18 L50,94', shade(COLORS.coat, -0.25), 3) +
     shape('M36,10 Q50,26 64,10 L66,18 Q50,34 34,18 Z', '#f3efe6'),

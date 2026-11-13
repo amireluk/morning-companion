@@ -1,5 +1,5 @@
-import { drawKid, itemIcon, weatherIcon, skyClock, arrowIcon } from './art.js';
-import { planOutfit } from './outfit.js';
+import { drawKid, itemIcon, weatherIcon, skyClock } from './art.js';
+import { planOutfit, phasesOf, isRainy } from './outfit.js';
 import { resolveLocation, fetchForecast, dateKey, iconKind, demoDay } from './weather.js';
 import { load, save, isReader } from './store.js';
 import { openSettings } from './settings.js';
@@ -8,7 +8,7 @@ const LABELS = {
   tee: 'חולצה קצרה', longsleeve: 'חולצה ארוכה', sweatshirt: 'סווטשירט', coat: 'מעיל',
   shorts: 'מכנס קצר', pants: 'מכנס ארוך', sneakers: 'נעליים', sandals: 'סנדלים', boots: 'מגפיים',
   umbrella: 'מטריה', beanie: 'כובע צמר', gloves: 'כפפות', scarf: 'צעיף', cap: 'כובע',
-  bottle: 'בקבוק מים', sunscreen: 'קרם הגנה',
+  bottle: 'בקבוק מים',
 };
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
@@ -47,11 +47,7 @@ const hh = (h) => `${String(h).padStart(2, '0')}:00`;
 const deg = (t) => `${Math.round(t)}°`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-function phaseName(from) {
-  if (from < 11) return 'בבוקר';
-  if (from < 14) return 'בצהריים';
-  return 'אחר הצהריים';
-}
+const PHASES = ['בוקר', 'צהריים', 'ערב'];
 
 // ---------- data ----------
 async function refresh() {
@@ -94,7 +90,7 @@ function render() {
   } else {
     const win = day.filter((h) => h.hour >= settings.leaveHour && h.hour <= settings.returnHour);
     body = timeline(win, readers) +
-      `<main class="kids kids-${kids.length}">${kids.map((k) => kidCard(k, planOutfit(win, k.offset || 0), kids.length)).join('')}</main>`;
+      `<main class="kids kids-${kids.length}">${kids.map((k) => kidCard(k, planOutfit(win, k.offset || 0))).join('')}</main>`;
   }
   app.innerHTML = header(tomorrow, date, readers) + body;
   bindGear();
@@ -109,52 +105,42 @@ function header(tomorrow, date, readers) {
   return `<header class="top">${badge}<div class="where">${stale}<span>${esc(locName)}</span><button class="gear" aria-label="הגדרות (לחיצה ארוכה)">⚙</button></div></header>`;
 }
 
+// Three tiles: morning / noon / evening of the hours the kids are out.
 function timeline(win, readers) {
-  const cols = win.map((h) => {
-    const rain = h.pop >= 30 ? `<div class="pop">💧${readers ? `<small>${h.pop}%</small>` : ''}</div>` : '<div class="pop"></div>';
-    return `<div class="hour">` +
-      (readers ? `<div class="hlabel">${h.hour}</div>` : '') +
-      weatherIcon(iconKind(h), !h.day) +
-      `<div class="tchip" style="background:${tempColor(h.feels)}">${readers ? deg(h.temp) : ''}</div>` +
-      rain + `</div>`;
+  const tiles = phasesOf(win).map((ph, i) => {
+    const rainy = ph.filter(isRainy);
+    const h = rainy.length ? rainy.reduce((a, b) => (b.precip > a.precip ? b : a)) : ph[Math.floor(ph.length / 2)];
+    let kind = iconKind(h);
+    if (rainy.length && !['rain', 'drizzle', 'storm', 'snow'].includes(kind)) kind = 'rain';
+    const temps = ph.map((x) => x.temp);
+    const lo = Math.round(Math.min(...temps)), hi = Math.round(Math.max(...temps));
+    const avgFeels = ph.reduce((s, x) => s + x.feels, 0) / ph.length;
+    const range = `<bdi dir="ltr">${hi - lo < 2 ? deg((lo + hi) / 2) : `${lo}°–${hi}°`}</bdi>`;
+    const pop = Math.max(...ph.map((x) => x.pop));
+    return `<div class="phase">` +
+      skyClock((ph[0].hour + ph[ph.length - 1].hour) / 2) +
+      weatherIcon(kind, !h.day) +
+      `<div class="ptext">${readers ? `<span class="pname">${PHASES[i] || ''}</span>` : ''}` +
+      `<div class="tchip" style="background:${tempColor(avgFeels)}">${readers ? range : ''}</div>` +
+      (rainy.length ? `<div class="pop">💧${readers ? ` ${pop}%` : ''}</div>` : '') +
+      `</div></div>`;
   }).join('');
-  const grad = win.map((h, i) => `${tempColor(h.feels)} ${Math.round((i / Math.max(1, win.length - 1)) * 100)}%`).join(',');
-  return `<section class="timeline" style="--grad:linear-gradient(to left, ${grad})">${cols}</section>`;
+  return `<section class="timeline">${tiles}</section>`;
 }
 
-function kidCard(kid, plan, count) {
+// One figure dressed for leaving the house + what goes in the bag for later.
+function kidCard(kid, plan) {
   if (!plan) return '';
   const reader = isReader(kid);
-  const multi = plan.segments.length > 1;
-  const tall = plan.segments.some((s) => s.acc.includes('umbrella'));
-  let figs = '';
-  plan.segments.forEach((seg, i) => {
-    if (i > 0) figs += transition(plan.transitions[i - 1], kid, reader);
-    const temps = seg.hours.map((h) => h.temp);
-    const lo = Math.min(...temps), hi = Math.max(...temps);
-    const range = `<bdi dir="ltr">${Math.round(lo) === Math.round(hi) ? deg(lo) : `${deg(lo)}–${deg(hi)}`}</bdi>`;
-    const cap = multi || reader
-      ? `<div class="fig-cap">${multi ? skyClock((seg.from + seg.to) / 2) : ''}${reader ? `<div class="cap-text">${multi ? `<span>${phaseName(seg.from)}</span>` : ''}<b>${range}</b></div>` : ''}</div>`
-      : '';
-    figs += `<div class="fig">${cap}${drawKid(kid, seg, { mood: seg.mood, bottle: plan.bottle && i === 0, tall })}</div>`;
-  });
-
-  const cards = plan.items.map((it) =>
-    `<div class="card${it.bag ? ' in-bag' : ''}">${itemIcon(it.id, kid.color)}` +
-    (it.bag ? `<div class="bag-badge">${itemIcon('backpack')}</div>` : '') +
-    (reader ? `<div class="clabel">${LABELS[it.id] || ''}</div>` : '') + `</div>`).join('');
-
+  const m = plan.morning;
+  const fig = `<div class="fig">${drawKid(kid, m, { mood: m.mood })}</div>`;
+  const bag = plan.bag.length
+    ? `<div class="bag">${reader ? '<div class="bag-title">לשים בתיק</div>' : ''}` +
+      `<div class="bag-items">${plan.bag.map((id) => `<div class="card">${itemIcon(id, kid.color)}${reader ? `<div class="clabel">${LABELS[id] || ''}</div>` : ''}</div>`).join('')}</div>` +
+      `<div class="bag-arrow">⬇</div><div class="bag-icon">${itemIcon('backpack')}</div></div>`
+    : '';
   const name = kid.name ? `<div class="kid-name" style="--c:${kid.color}">${esc(kid.name)}</div>` : '';
-  return `<section class="kid segs-${plan.segments.length}">${name}<div class="figures">${figs}</div><div class="items">${cards}</div></section>`;
-}
-
-function transition(tr, kid, reader) {
-  const mini = (ids) => ids.map((id) => `<span class="mini">${itemIcon(id, kid.color)}</span>`).join('');
-  const word = (w) => (reader ? `<span class="tr-text">${w}</span>` : '');
-  let inner = '';
-  if (tr.off.length) inner += `<div class="move off">${mini(tr.off)}<span class="dir">⬇</span><span class="mini bag">${itemIcon('backpack')}</span>${word('להוריד לתיק')}</div>`;
-  if (tr.on.length) inner += `<div class="move on"><span class="mini bag">${itemIcon('backpack')}</span><span class="dir">⬆</span>${mini(tr.on)}${word('להוציא מהתיק')}</div>`;
-  return `<div class="trans">${arrowIcon()}${inner}</div>`;
+  return `<section class="kid${bag ? ' has-bag' : ''}">${name}<div class="kid-body">${fig}${bag}</div></section>`;
 }
 
 // ---------- settings access (long press on the gear) ----------
