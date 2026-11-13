@@ -1,4 +1,4 @@
-import { searchCity, TEL_AVIV } from './weather.js';
+import { searchCity } from './weather.js';
 import { newKid, MAX_KIDS } from './store.js';
 import { SKINS, HAIRS, SHIRT_COLORS, drawKid, hairStyleOf, itemIcon } from './art.js';
 import { LEVEL_NAMES, defaultRules, normalizeRules } from './outfit.js';
@@ -71,17 +71,25 @@ export function openSettings(current, onSave) {
     </fieldset>`;
   }
 
+  let tab = 'kids';
+  // names are typed into inputs that a redraw replaces: copy them first
+  const syncNames = () => dlg.querySelectorAll('input[data-f="name"]').forEach((el) => { s.kids[+el.dataset.k].name = el.value.trim(); });
+
   function draw() {
     const L = s.location;
-    dlg.innerHTML = `<form class="panel">
-      <h2>הגדרות</h2>
-      <fieldset><legend>מיקום</legend>
+    // redrawing the form must not jump the panel back to the top
+    const scroll = dlg.querySelector('.panel')?.scrollTop || 0;
+    const kidsTab = `<fieldset><legend>ילדים</legend>
+        ${s.kids.map(kidHtml).join('')}
+        ${s.kids.length < MAX_KIDS ? '<button type="button" class="add">+ הוספת ילד/ה</button>' : ''}
+      </fieldset>`;
+    const generalTab = `<fieldset><legend>מיקום</legend>
         <div class="row">
           <button type="button" class="pill${L.mode === 'auto' ? ' on' : ''}" data-loc="auto">זיהוי אוטומטי</button>
           <button type="button" class="pill${L.mode === 'manual' ? ' on' : ''}" data-loc="manual">בחירת עיר</button>
         </div>
         ${L.mode === 'auto'
-          ? `<div class="hint">אם הזיהוי לא יעבוד – ${esc(TEL_AVIV.name)}</div>`
+          ? ''
           : `<div class="hint">נבחר: <b>${esc(L.name)}</b></div>
              <div class="row"><input id="cityq" placeholder="חיפוש עיר…"><button type="button" id="citygo">חיפוש</button></div>
              <div id="cityres"></div>`}
@@ -90,22 +98,31 @@ export function openSettings(current, onSave) {
         <label>יוצאים מהבית <select data-f="leaveHour">${hourOpts(s.leaveHour, 5, 12)}</select></label>
         <label>חוזרים הביתה <select data-f="returnHour">${hourOpts(s.returnHour, 10, 20)}</select></label>
         <label>מאיזו שעה להציג את מחר <select data-f="switchHour">${hourOpts(s.switchHour, 12, 23)}</select></label>
-        <label>מסך כהה בלילה, מ־ <select data-f="nightStart">${hourOpts(s.nightStart, 18, 23)}</select></label>
-        <label>עד <select data-f="nightEnd">${hourOpts(s.nightEnd, 3, 8)}</select></label>
       </fieldset>
-      <fieldset><legend>ילדים</legend>
-        ${s.kids.map(kidHtml).join('')}
-        ${s.kids.length < MAX_KIDS ? '<button type="button" class="add">+ הוספת ילד/ה</button>' : ''}
-      </fieldset>
-      ${rulesHtml()}
+      ${rulesHtml()}`;
+    dlg.innerHTML = `<form class="panel">
+      <h2>הגדרות</h2>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" class="tab${tab === 'kids' ? ' on' : ''}" aria-selected="${tab === 'kids'}" data-tab="kids">ילדים</button>
+        <button type="button" role="tab" class="tab${tab === 'general' ? ' on' : ''}" aria-selected="${tab === 'general'}" data-tab="general">מזג אוויר ושעות</button>
+      </div>
+      ${tab === 'kids' ? kidsTab : generalTab}
       <div class="actions"><button type="submit" class="save">שמירה</button><button type="button" class="cancel">ביטול</button></div>
     </form>`;
+    dlg.querySelector('.panel').scrollTop = scroll;
   }
 
   dlg.addEventListener('click', async (e) => {
     const b = e.target.closest('button');
     if (!b) return;
     if (b.classList.contains('cancel')) return close();
+    if (b.dataset.tab) {
+      syncNames();
+      tab = b.dataset.tab;
+      draw();
+      dlg.querySelector('.panel').scrollTop = 0; // a new tab starts at its top
+      return;
+    }
     if (b.classList.contains('reset-rules')) { s.rules = defaultRules(); return draw(); }
     if (b.classList.contains('add')) { s.kids.push(newKid(s.kids.length)); return draw(); }
     if (b.dataset.remove != null) { s.kids.splice(+b.dataset.remove, 1); return draw(); }
@@ -158,7 +175,7 @@ export function openSettings(current, onSave) {
 
   dlg.addEventListener('submit', (e) => {
     e.preventDefault();
-    dlg.querySelectorAll('input[data-f="name"]').forEach((el) => { s.kids[+el.dataset.k].name = el.value.trim(); });
+    syncNames();
     if (s.returnHour <= s.leaveHour) s.returnHour = s.leaveHour + 1;
     s.rules = normalizeRules(s.rules);
     close();
@@ -207,7 +224,7 @@ export function openWelcome(current, onDone) {
   function draw() {
     dlg.innerHTML = `<form class="panel">
       <h2>בוקר טוב! מי הילדים?</h2>
-      <div class="hint">כל בוקר נראה להם מה ללבוש לפי מזג האוויר. אפשר לשנות הכול אחר כך בלחיצה ארוכה על ⚙.</div>
+      <div class="hint">כל בוקר נראה להם מה ללבוש לפי מזג האוויר. אפשר לשנות הכול אחר כך בכפתור ☰ שבפינה.</div>
       <div class="w-list">${kids.map(row).join('')}</div>
       ${kids.length < MAX_KIDS ? '<button type="button" class="add">+ עוד ילד/ה</button>' : ''}
       <fieldset class="w-hours"><legend>מתי יוצאים וחוזרים?</legend>
@@ -215,7 +232,7 @@ export function openWelcome(current, onDone) {
         <label>חוזרים הביתה <select id="w-return">${hourOpts(hours.returnHour, 10, 20)}</select></label>
         <div class="hint">הבגדים נבחרים לפי מזג האוויר בשעות האלה.</div>
       </fieldset>
-      <div class="hint">📍 בלחיצה על "מתחילים" הדפדפן יבקש גישה למיקום – כדי להביא את התחזית של המקום שלכם. בלי מיקום נשתמש בתל אביב.</div>
+      <div class="hint">📍 בלחיצה על "מתחילים" הדפדפן יבקש גישה למיקום – כדי להביא את התחזית של המקום שלכם.</div>
       <div class="actions"><button type="submit" class="save">יאללה, מתחילים</button></div>
     </form>`;
   }

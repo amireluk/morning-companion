@@ -69,12 +69,21 @@ function targetDay(n) {
   return { tomorrow, date: d, key: dateKey(d) };
 }
 
+// Dark outside right now? Taken from the forecast's day/night flag for this
+// hour (it follows sunrise and sunset); falls back to 19:00–06:00.
+function isDark(n) {
+  const today = DEMO ? demoDay(DEMO) : state.forecast?.days?.[dateKey(n)];
+  const h = today?.find((x) => x.hour === n.getHours());
+  if (h && h.day != null) return !h.day;
+  return n.getHours() >= 19 || n.getHours() < 6;
+}
+
 // ---------- render ----------
 function render() {
   const n = now();
   const { tomorrow, date, key } = targetDay(n);
   const hour = n.getHours();
-  const night = hour >= settings.nightStart || hour < settings.nightEnd;
+  const night = isDark(n);
   document.body.classList.toggle('tomorrow', tomorrow);
   document.body.classList.toggle('night', night && Date.now() > state.wakeUntil);
   manageWakeLock();
@@ -102,7 +111,7 @@ function header(tomorrow, date, readers) {
   // the city name comes from a separate service; if it's unavailable, still say where
   const locName = DEMO ? `דמו: ${DEMO}` : state.loc?.name || (state.loc ? (state.loc.source === 'default' ? 'תל אביב' : 'המיקום שלך') : '');
   const stale = state.forecast?.stale || state.error ? '<i class="stale" title="אין חיבור – מציג נתונים שמורים"></i>' : '';
-  return `<header class="top">${badge}<div class="where">${stale}<span>${esc(locName)}</span><button class="gear" aria-label="הגדרות (לחיצה ארוכה)">⚙</button></div></header>`;
+  return `<header class="top">${badge}<div class="where">${stale}<span>${esc(locName)}</span><button class="gear" aria-label="הגדרות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></header>`;
 }
 
 // Three tiles: morning / noon / evening of the hours the kids are out.
@@ -124,7 +133,7 @@ function timeline(win, readers) {
     const from = ph[0].hour, to = ph[ph.length - 1].hour + 1;
     return `<div class="phase">` +
       weatherIcon(kind, !h.day) +
-      `<div class="ptext"><span class="pname">${phaseName(from, to)} <span class="phours"><bdi dir="ltr">${from}–${to}</bdi></span></span>` +
+      `<div class="ptext"><span class="pname">${phaseName(from, to)}</span>` +
       `<div class="tchip" style="background:${levelColor(feels)}"><bdi dir="ltr">${Math.round(feels)}°</bdi></div>` +
       `<span class="pfeel">${feelWord(feels)}</span>` +
       (rainy.length ? `<div class="pop">💧 ${pop}%</div>` : '') +
@@ -158,22 +167,7 @@ function scene(kids, plan, tomorrow) {
 
 // ---------- settings access (long press on the gear) ----------
 function bindGear() {
-  const g = app.querySelector('.gear');
-  if (!g) return;
-  let t = null, x0 = 0, y0 = 0;
-  const cancel = () => { clearTimeout(t); t = null; g.classList.remove('pressing'); };
-  g.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    x0 = e.clientX; y0 = e.clientY;
-    g.setPointerCapture?.(e.pointerId);
-    g.classList.add('pressing'); // CSS draws a ring that fills while held
-    t = setTimeout(() => { cancel(); showSettings(); }, 1200);
-  });
-  // a small wobble of the finger shouldn't cancel the press
-  g.addEventListener('pointermove', (e) => { if (t && Math.hypot(e.clientX - x0, e.clientY - y0) > 20) cancel(); });
-  g.addEventListener('pointerup', cancel);
-  g.addEventListener('pointercancel', cancel);
-  g.addEventListener('contextmenu', (e) => e.preventDefault());
+  app.querySelector('.gear')?.addEventListener('click', showSettings);
 }
 
 function showSettings() {
@@ -196,7 +190,7 @@ async function manageWakeLock() {
   } catch { /* not allowed right now */ }
 }
 
-// a tap at night wakes the screen for a minute
+// a tap in the dark brings full brightness for a minute
 document.addEventListener('pointerdown', () => {
   if (document.body.classList.contains('night')) {
     state.wakeUntil = Date.now() + 60_000;

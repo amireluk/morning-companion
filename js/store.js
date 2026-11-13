@@ -22,8 +22,6 @@ export const defaults = () => ({
   leaveHour: 8,
   returnHour: 17,
   switchHour: 17, // from this hour on, show tomorrow
-  nightStart: 21,
-  nightEnd: 6,
   kids: [newKid(0)], // the welcome screen asks for the real names on first load
   rules: defaultRules(),
   configured: false,

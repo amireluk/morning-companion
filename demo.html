@@ -89,29 +89,18 @@ body.tomorrow {
 .gear {
   border: 0;
   background: none;
-  font-size: clamp(18px, 3vh, 28px);
   color: inherit;
-  opacity: .35;
-  padding: .3em;
-  border-radius: 50%;
-  touch-action: none;
+  width: 52px;
+  height: 52px;
+  padding: 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
 }
-.gear { position: relative; width: 56px; height: 56px; display: grid; place-items: center; }
-/* a ring that fills while the gear is held */
-@property --p { syntax: '<number>'; inherits: false; initial-value: 0; }
-.gear::before {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  background: conic-gradient(var(--accent) calc(var(--p) * 1%), rgba(0,0,0,.08) 0);
-  -webkit-mask: radial-gradient(circle, transparent 58%, #000 60%);
-  mask: radial-gradient(circle, transparent 58%, #000 60%);
-  opacity: 0;
-}
-.gear.pressing { opacity: 1; }
-.gear.pressing::before { opacity: 1; animation: gear-fill 1.2s linear forwards; }
-@keyframes gear-fill { to { --p: 100; } }
+.gear svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
+.gear:hover, .gear:focus-visible { background: rgba(61,43,31,.08); }
+.gear:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* ---------- timeline: morning / noon / evening ---------- */
 .timeline {
@@ -135,7 +124,6 @@ body.tomorrow {
 .phase .sky-svg { height: clamp(28px, 7vh, 70px); width: auto; flex: none; }
 .phase .wx-svg { height: clamp(40px, 9vh, 100px); width: auto; flex: none; }
 .ptext { display: flex; flex-direction: column; align-items: center; gap: .4vh; }
-.phours { font-weight: 500; font-size: .62em; color: var(--muted); }
 .pname { font-weight: 700; font-size: clamp(14px, 2.4vh, 26px); line-height: 1; }
 .tchip {
   min-width: 9vh;
@@ -287,7 +275,7 @@ body.night::after {
   position: fixed;
   inset: 0;
   background: #000;
-  opacity: .9;
+  opacity: .5;
   pointer-events: none;
   transition: opacity 2s;
 }
@@ -443,6 +431,20 @@ legend { font-weight: 700; padding: 0 6px; }
   .items .clabel { font-size: 12px; }
   .tomorrow-ribbon { position: static; transform: none; align-self: center; margin-bottom: 6px; font-size: 18px; }
 }
+
+/* settings tabs */
+.tabs { display: flex; gap: 6px; margin: 0 0 14px; border-bottom: 2px solid var(--edge); }
+.panel .tab {
+  border: 0;
+  border-radius: 12px 12px 0 0;
+  background: transparent;
+  padding: 10px 18px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: -2px;
+  border-bottom: 3px solid transparent;
+}
+.panel .tab.on { color: var(--ink); border-bottom-color: var(--accent); background: #fff6ea; }
 
 /* ---- demo wrapper (single-look storybook page; day = paper, "tomorrow" = night sky) ---- */
 :root { --bar: #fffaf0; --bar-ink: #5b4634; --chip: #ffffff; --chip-on: #f08a4b; }
@@ -1282,8 +1284,6 @@ const defaults = () => ({
   leaveHour: 8,
   returnHour: 17,
   switchHour: 17, // from this hour on, show tomorrow
-  nightStart: 21,
-  nightEnd: 6,
   kids: [newKid(0)], // the welcome screen asks for the real names on first load
   rules: defaultRules(),
   configured: false,
@@ -1374,17 +1374,25 @@ function openSettings(current, onSave) {
     </fieldset>`;
   }
 
+  let tab = 'kids';
+  // names are typed into inputs that a redraw replaces: copy them first
+  const syncNames = () => dlg.querySelectorAll('input[data-f="name"]').forEach((el) => { s.kids[+el.dataset.k].name = el.value.trim(); });
+
   function draw() {
     const L = s.location;
-    dlg.innerHTML = `<form class="panel">
-      <h2>הגדרות</h2>
-      <fieldset><legend>מיקום</legend>
+    // redrawing the form must not jump the panel back to the top
+    const scroll = dlg.querySelector('.panel')?.scrollTop || 0;
+    const kidsTab = `<fieldset><legend>ילדים</legend>
+        ${s.kids.map(kidHtml).join('')}
+        ${s.kids.length < MAX_KIDS ? '<button type="button" class="add">+ הוספת ילד/ה</button>' : ''}
+      </fieldset>`;
+    const generalTab = `<fieldset><legend>מיקום</legend>
         <div class="row">
           <button type="button" class="pill${L.mode === 'auto' ? ' on' : ''}" data-loc="auto">זיהוי אוטומטי</button>
           <button type="button" class="pill${L.mode === 'manual' ? ' on' : ''}" data-loc="manual">בחירת עיר</button>
         </div>
         ${L.mode === 'auto'
-          ? `<div class="hint">אם הזיהוי לא יעבוד – ${escS(TEL_AVIV.name)}</div>`
+          ? ''
           : `<div class="hint">נבחר: <b>${escS(L.name)}</b></div>
              <div class="row"><input id="cityq" placeholder="חיפוש עיר…"><button type="button" id="citygo">חיפוש</button></div>
              <div id="cityres"></div>`}
@@ -1393,22 +1401,31 @@ function openSettings(current, onSave) {
         <label>יוצאים מהבית <select data-f="leaveHour">${hourOpts(s.leaveHour, 5, 12)}</select></label>
         <label>חוזרים הביתה <select data-f="returnHour">${hourOpts(s.returnHour, 10, 20)}</select></label>
         <label>מאיזו שעה להציג את מחר <select data-f="switchHour">${hourOpts(s.switchHour, 12, 23)}</select></label>
-        <label>מסך כהה בלילה, מ־ <select data-f="nightStart">${hourOpts(s.nightStart, 18, 23)}</select></label>
-        <label>עד <select data-f="nightEnd">${hourOpts(s.nightEnd, 3, 8)}</select></label>
       </fieldset>
-      <fieldset><legend>ילדים</legend>
-        ${s.kids.map(kidHtml).join('')}
-        ${s.kids.length < MAX_KIDS ? '<button type="button" class="add">+ הוספת ילד/ה</button>' : ''}
-      </fieldset>
-      ${rulesHtml()}
+      ${rulesHtml()}`;
+    dlg.innerHTML = `<form class="panel">
+      <h2>הגדרות</h2>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" class="tab${tab === 'kids' ? ' on' : ''}" aria-selected="${tab === 'kids'}" data-tab="kids">ילדים</button>
+        <button type="button" role="tab" class="tab${tab === 'general' ? ' on' : ''}" aria-selected="${tab === 'general'}" data-tab="general">מזג אוויר ושעות</button>
+      </div>
+      ${tab === 'kids' ? kidsTab : generalTab}
       <div class="actions"><button type="submit" class="save">שמירה</button><button type="button" class="cancel">ביטול</button></div>
     </form>`;
+    dlg.querySelector('.panel').scrollTop = scroll;
   }
 
   dlg.addEventListener('click', async (e) => {
     const b = e.target.closest('button');
     if (!b) return;
     if (b.classList.contains('cancel')) return close();
+    if (b.dataset.tab) {
+      syncNames();
+      tab = b.dataset.tab;
+      draw();
+      dlg.querySelector('.panel').scrollTop = 0; // a new tab starts at its top
+      return;
+    }
     if (b.classList.contains('reset-rules')) { s.rules = defaultRules(); return draw(); }
     if (b.classList.contains('add')) { s.kids.push(newKid(s.kids.length)); return draw(); }
     if (b.dataset.remove != null) { s.kids.splice(+b.dataset.remove, 1); return draw(); }
@@ -1461,7 +1478,7 @@ function openSettings(current, onSave) {
 
   dlg.addEventListener('submit', (e) => {
     e.preventDefault();
-    dlg.querySelectorAll('input[data-f="name"]').forEach((el) => { s.kids[+el.dataset.k].name = el.value.trim(); });
+    syncNames();
     if (s.returnHour <= s.leaveHour) s.returnHour = s.leaveHour + 1;
     s.rules = normalizeRules(s.rules);
     close();
@@ -1510,7 +1527,7 @@ function openWelcome(current, onDone) {
   function draw() {
     dlg.innerHTML = `<form class="panel">
       <h2>בוקר טוב! מי הילדים?</h2>
-      <div class="hint">כל בוקר נראה להם מה ללבוש לפי מזג האוויר. אפשר לשנות הכול אחר כך בלחיצה ארוכה על ⚙.</div>
+      <div class="hint">כל בוקר נראה להם מה ללבוש לפי מזג האוויר. אפשר לשנות הכול אחר כך בכפתור ☰ שבפינה.</div>
       <div class="w-list">${kids.map(row).join('')}</div>
       ${kids.length < MAX_KIDS ? '<button type="button" class="add">+ עוד ילד/ה</button>' : ''}
       <fieldset class="w-hours"><legend>מתי יוצאים וחוזרים?</legend>
@@ -1518,7 +1535,7 @@ function openWelcome(current, onDone) {
         <label>חוזרים הביתה <select id="w-return">${hourOpts(hours.returnHour, 10, 20)}</select></label>
         <div class="hint">הבגדים נבחרים לפי מזג האוויר בשעות האלה.</div>
       </fieldset>
-      <div class="hint">📍 בלחיצה על "מתחילים" הדפדפן יבקש גישה למיקום – כדי להביא את התחזית של המקום שלכם. בלי מיקום נשתמש בתל אביב.</div>
+      <div class="hint">📍 בלחיצה על "מתחילים" הדפדפן יבקש גישה למיקום – כדי להביא את התחזית של המקום שלכם.</div>
       <div class="actions"><button type="submit" class="save">יאללה, מתחילים</button></div>
     </form>`;
   }
@@ -1635,12 +1652,21 @@ function targetDay(n) {
   return { tomorrow, date: d, key: dateKey(d) };
 }
 
+// Dark outside right now? Taken from the forecast's day/night flag for this
+// hour (it follows sunrise and sunset); falls back to 19:00–06:00.
+function isDark(n) {
+  const today = DEMO ? (DEMO_DAY || demoDay(DEMO, DEMO_RAIN)) : state.forecast?.days?.[dateKey(n)];
+  const h = today?.find((x) => x.hour === n.getHours());
+  if (h && h.day != null) return !h.day;
+  return n.getHours() >= 19 || n.getHours() < 6;
+}
+
 // ---------- render ----------
 function render() {
   const n = now();
   const { tomorrow, date, key } = targetDay(n);
   const hour = n.getHours();
-  const night = hour >= settings.nightStart || hour < settings.nightEnd;
+  const night = isDark(n);
   document.body.classList.toggle('tomorrow', tomorrow);
   document.body.classList.toggle('night', night && Date.now() > state.wakeUntil);
   manageWakeLock();
@@ -1668,7 +1694,7 @@ function header(tomorrow, date, readers) {
   // the city name comes from a separate service; if it's unavailable, still say where
   const locName = DEMO ? `דמו: ${DEMO}` : state.loc?.name || (state.loc ? (state.loc.source === 'default' ? 'תל אביב' : 'המיקום שלך') : '');
   const stale = state.forecast?.stale || state.error ? '<i class="stale" title="אין חיבור – מציג נתונים שמורים"></i>' : '';
-  return `<header class="top">${badge}<div class="where">${stale}<span>${esc(locName)}</span><button class="gear" aria-label="הגדרות (לחיצה ארוכה)">⚙</button></div></header>`;
+  return `<header class="top">${badge}<div class="where">${stale}<span>${esc(locName)}</span><button class="gear" aria-label="הגדרות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></header>`;
 }
 
 // Three tiles: morning / noon / evening of the hours the kids are out.
@@ -1690,7 +1716,7 @@ function timeline(win, readers) {
     const from = ph[0].hour, to = ph[ph.length - 1].hour + 1;
     return `<div class="phase">` +
       weatherIcon(kind, !h.day) +
-      `<div class="ptext"><span class="pname">${phaseName(from, to)} <span class="phours"><bdi dir="ltr">${from}–${to}</bdi></span></span>` +
+      `<div class="ptext"><span class="pname">${phaseName(from, to)}</span>` +
       `<div class="tchip" style="background:${levelColor(feels)}"><bdi dir="ltr">${Math.round(feels)}°</bdi></div>` +
       `<span class="pfeel">${feelWord(feels)}</span>` +
       (rainy.length ? `<div class="pop">💧 ${pop}%</div>` : '') +
@@ -1724,22 +1750,7 @@ function scene(kids, plan, tomorrow) {
 
 // ---------- settings access (long press on the gear) ----------
 function bindGear() {
-  const g = app.querySelector('.gear');
-  if (!g) return;
-  let t = null, x0 = 0, y0 = 0;
-  const cancel = () => { clearTimeout(t); t = null; g.classList.remove('pressing'); };
-  g.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    x0 = e.clientX; y0 = e.clientY;
-    g.setPointerCapture?.(e.pointerId);
-    g.classList.add('pressing'); // CSS draws a ring that fills while held
-    t = setTimeout(() => { cancel(); showSettings(); }, 1200);
-  });
-  // a small wobble of the finger shouldn't cancel the press
-  g.addEventListener('pointermove', (e) => { if (t && Math.hypot(e.clientX - x0, e.clientY - y0) > 20) cancel(); });
-  g.addEventListener('pointerup', cancel);
-  g.addEventListener('pointercancel', cancel);
-  g.addEventListener('contextmenu', (e) => e.preventDefault());
+  app.querySelector('.gear')?.addEventListener('click', showSettings);
 }
 
 function showSettings() {
@@ -1762,7 +1773,7 @@ async function manageWakeLock() {
   } catch { /* not allowed right now */ }
 }
 
-// a tap at night wakes the screen for a minute
+// a tap in the dark brings full brightness for a minute
 document.addEventListener('pointerdown', () => {
   if (document.body.classList.contains('night')) {
     state.wakeUntil = Date.now() + 60_000;
