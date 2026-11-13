@@ -131,7 +131,7 @@ body.tomorrow {
 
 /* ---------- the scene: all kids together ---------- */
 .scene {
-  position: relative; /* anchors the 'מחר בבוקר' / part-of-day ribbon */
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -376,23 +376,6 @@ legend { font-weight: 700; padding: 0 6px; }
 /* tomorrow (evening) mode: unmistakable even without reading */
 .tomorrow .day-badge { font-size: clamp(20px, 4.2vh, 44px); }
 .tomorrow .scene { background: #ecebff; border-color: #b9b3e0; position: relative; }
-.tomorrow-ribbon {
-  position: absolute;
-  top: 1.2vh;
-  inset-inline-start: 50%;
-  transform: translateX(50%);
-  display: flex;
-  align-items: center;
-  gap: .4em;
-  padding: .2em 1em .2em .6em;
-  border-radius: 99px;
-  background: #2f3c6e;
-  color: #fff4c2;
-  font-weight: 700;
-  font-size: clamp(18px, 3.4vh, 36px);
-  z-index: 1;
-}
-.tomorrow-ribbon .wx-svg { height: 1.6em; width: auto; }
 
 /* settings: controls next to their labels, bigger checkboxes */
 .panel fieldset > label { max-width: 560px; }
@@ -405,7 +388,6 @@ legend { font-weight: 700; padding: 0 6px; }
   .items { gap: 4px; }
   .items .card { flex: 1 1 0; min-width: 0; max-width: 76px; }
   .items .clabel { font-size: 12px; }
-  .tomorrow-ribbon { position: static; transform: none; align-self: center; margin-bottom: 6px; font-size: 18px; }
 }
 
 /* settings tabs */
@@ -521,5 +503,3 @@ legend { font-weight: 700; padding: 0 6px; }
 .phase { font: inherit; color: inherit; cursor: pointer; }
 .phase.on { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(240,138,75,.35); }
 .phase:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.phase-ribbon { background: #f08a4b; color: #fff; }
-.tomorrow .phase-ribbon { background: #2f3c6e; color: #fff4c2; }

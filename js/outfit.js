@@ -96,16 +96,11 @@ export function planOutfit(hours, offset = 0, rules = defaultRules()) {
     if (lv.winter) acc.push('scarf', 'beanie', 'gloves');
     const wet = ph.some(rainy);
     if (wet) acc.push('umbrella');
+    // the cap only where this part of the day is warm enough for it; if the
+    // morning doesn't need it, it goes in the bag (like the umbrella)
     if (!wet && hot.cap) acc.push('cap');
     return { from: ph[0].hour, to: ph[ph.length - 1].hour, tMin: t, tMax, layers, acc, hours: ph, cold: lv.winter };
   });
-
-  // once the sun cap is needed it stays on for the rest of the day; parts of
-  // the day before that go without it, so a cold morning sends it to the bag
-  const firstCap = raw.findIndex((p) => p.acc.includes('cap'));
-  if (firstCap >= 0) {
-    for (const p of raw.slice(firstCap)) if (!p.acc.includes('umbrella') && !p.acc.includes('cap')) p.acc.push('cap');
-  }
 
   // merge neighbouring phases that need the same clothes
   const segments = [];

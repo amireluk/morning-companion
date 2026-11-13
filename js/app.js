@@ -191,12 +191,7 @@ function scene(kids, plan, tomorrow, win) {
     ? `<div class="bag"><div class="bag-title">לקחת איתך</div><div class="bag-items">${plan.bag.map(card).join('')}</div>` +
       `<div class="bag-arrow">⬇</div><div class="bag-icon">${itemIcon('backpack')}</div></div>`
     : '';
-  const when = ph ? phaseName(ph.from, ph.to + 1) : 'בבוקר';
-  const label = ph ? (when === 'אחה״צ' ? 'אחר הצהריים' : `ב${when}`) : 'בבוקר';
-  const ribbon = tomorrow || ph
-    ? `<div class="tomorrow-ribbon${ph ? ' phase-ribbon' : ''}">${weatherIcon(tomorrow && !ph ? 'sunrise' : 'clear', false)}<span>${tomorrow ? 'מחר ' : ''}${label}</span></div>`
-    : '';
-  return `<main class="scene kids-${kids.length}">${ribbon}<div class="scene-body"><div class="figs">${figs}</div>${bag}</div>` +
+  return `<main class="scene kids-${kids.length}"><div class="scene-body"><div class="figs">${figs}</div>${bag}</div>` +
     `<div class="items">${worn.map(card).join('')}</div></main>`;
 }
 
