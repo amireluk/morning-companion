@@ -175,7 +175,7 @@ function drawTop(kind, color, look) {
   return s;
 }
 
-function drawSweatshirt() {
+function drawSweatshirt(hood = true) {
   const c = COLORS.sweatshirt;
   let ticks = '';
   for (let x = 86; x <= 154; x += 8) ticks += `M${x},282 L${x},292 `;
@@ -184,11 +184,13 @@ function drawSweatshirt() {
     shape('M80,278 L160,278 L158,294 Q120,300 82,294 Z', shade(c, -0.15)) + line(ticks, shade(c, -0.3), 2) +
     // big kangaroo pocket
     shape('M96,226 L144,226 L152,266 L88,266 Z', shade(c, -0.08)) +
-    // oversized hood: sticks out on both sides of the head (head is drawn over its middle)
-    shape('M64,170 Q44,100 100,90 L140,90 Q196,100 176,170 Q120,192 64,170 Z', c) +
-    shape('M82,164 Q72,114 104,106 L136,106 Q168,114 158,164 Q120,180 82,164 Z', shade(c, -0.18)) +
+    (hood
+      // hood resting on the shoulders behind the neck (the head covers its top)
+      ? shape('M76,174 Q66,130 98,122 L142,122 Q174,130 164,174 Q120,190 76,174 Z', c) +
+        shape('M90,168 Q84,138 106,132 L134,132 Q156,138 150,168 Q120,180 90,168 Z', shade(c, -0.18))
+      : '') +
     // drawstrings
-    line('M112,168 L109,202 M128,168 L131,202', '#ffffff', 4) +
+    line('M112,170 L109,202 M128,170 L131,202', '#ffffff', 4) +
     `<circle cx="109" cy="204" r="3.5" fill="#ffffff" stroke="${O}" stroke-width="2"/><circle cx="131" cy="204" r="3.5" fill="#ffffff" stroke="${O}" stroke-width="2"/>`;
 }
 
@@ -324,7 +326,7 @@ export function drawKid(child, outfit, opts = {}) {
   s += shape('M109,128 L131,128 L131,160 L109,160 Z', skin);
   s += drawTop(outfit.shirt, shirtColor, child.look);
   if (!has('sweatshirt') && !has('coat')) s += shape('M106,148 Q120,166 134,148 Z', skin);
-  if (has('sweatshirt')) s += drawSweatshirt();
+  if (has('sweatshirt')) s += drawSweatshirt(!has('coat'));
   if (has('coat')) s += drawCoat();
   if (has('scarf')) s += drawScarf();
 
