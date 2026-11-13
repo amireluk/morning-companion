@@ -55,10 +55,10 @@ export async function searchCity(q) {
   }));
 }
 
-const HOURLY = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,uv_index,is_day';
+const HOURLY = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,uv_index,is_day';
 
 export async function fetchForecast({ lat, lon }) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&hourly=${HOURLY}&timezone=auto&forecast_days=3`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&hourly=${HOURLY}&timezone=auto&past_days=7&forecast_days=3`; // past week: baseline for "unusual"
   try {
     const r = await fetch(url);
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -72,7 +72,7 @@ export async function fetchForecast({ lat, lon }) {
   }
 }
 
-// → { 'YYYY-MM-DD': [ {hour, temp, feels, pop, precip, code, wind, uv, day} ] }
+// → { 'YYYY-MM-DD': [ {hour, temp, feels, pop, precip, code, wind, gust, uv, day} ] }
 function parse(j) {
   const h = j.hourly, out = {};
   h.time.forEach((t, i) => {
@@ -85,6 +85,7 @@ function parse(j) {
       precip: h.precipitation[i] ?? 0,
       code: h.weather_code[i] ?? 0,
       wind: h.wind_speed_10m[i] ?? 0,
+      gust: h.wind_gusts_10m?.[i] ?? 0,
       uv: h.uv_index[i] ?? 0,
       day: h.is_day[i] ?? 1,
     });

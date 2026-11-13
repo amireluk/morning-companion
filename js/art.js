@@ -457,6 +457,17 @@ export function weatherIcon(kind, night = false) {
     case 'rain': s = cloud(0, -10, '#dfe7f0', '#6f86a0') + drops(3); break;
     case 'storm': s = cloud(0, -12, '#c9d3df', '#5c6f86') + `<path d="M52,58 L40,78 L52,78 L44,96 L64,70 L52,70 L60,58 Z" fill="#ffd23f" stroke="#e0a21f" stroke-width="2.5" stroke-linejoin="round"/>`; break;
     case 'snow': s = cloud(0, -10) + `<g fill="#9fc9ef"><circle cx="32" cy="84" r="5"/><circle cx="50" cy="92" r="5"/><circle cx="68" cy="84" r="5"/></g>`; break;
+    case 'sunrise': { // tomorrow morning: a sun rising over the horizon
+      let rays = '';
+      for (const a of [-150, -120, -90, -60, -30]) {
+        const r = (a * Math.PI) / 180;
+        rays += `M${50 + Math.cos(r) * 30},${66 + Math.sin(r) * 30} L${50 + Math.cos(r) * 40},${66 + Math.sin(r) * 40} `;
+      }
+      s = line(rays, '#f7a928', 5) +
+        `<path d="M28,66 A22,22 0 0,1 72,66 Z" fill="#ffd23f" stroke="#f7a928" stroke-width="3"/>` +
+        line('M10,68 L90,68', '#f2a65a', 5) + line('M24,80 L76,80', '#f2a65a', 4, 'opacity="0.6"');
+      break;
+    }
     case 'wind': s = line('M14,38 L60,38 Q74,38 74,28 Q74,18 64,20 M14,54 L78,54 Q90,54 90,64 Q90,74 80,72 M14,70 L52,70', '#7d93ab', 6); break;
     default: s = cloud();
   }

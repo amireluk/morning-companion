@@ -14,7 +14,7 @@ def mod(name, extra=lambda s: s):
     s = re.sub(r"^import .*?;\n", "", s, flags=re.M)
     s = re.sub(r"^export ", "", s, flags=re.M)
     return extra(s)
-art = mod('art.js'); outfit = mod('outfit.js'); weather = mod('weather.js'); store = mod('store.js', lambda s: s.replace("'mc.settings'", "'mc.demo.settings'"))
+art = mod('art.js'); outfit = mod('outfit.js'); alerts = mod('alerts.js'); weather = mod('weather.js'); store = mod('store.js', lambda s: s.replace("'mc.settings'", "'mc.demo.settings'"))
 settings = mod('settings.js', lambda s: re.sub(r"\besc\(", "escS(", s).replace("const esc = ", "const escS = "))
 def app_fix(s):
     s = s.replace("const params = new URLSearchParams(location.search);\nconst DEMO = params.get('demo');\nconst DEMO_HOUR = params.has('hour') ? Number(params.get('hour')) : null;",
@@ -28,7 +28,7 @@ def app_fix(s):
 app = mod('app.js', app_fix)
 css = open(root + 'style.css').read()
 css = css.replace("#app {\n  height: 100vh;\n  height: 100dvh;", "#app {\n  flex: 1;\n  min-height: 0;")
-js = "\n".join([art, outfit, weather, store, settings, app])
+js = "\n".join([art, outfit, alerts, weather, store, settings, app])
 assert "esc(" not in settings
 html = f'''<title>מה לובשים היום?</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -67,6 +67,7 @@ body {{ display: flex; flex-direction: column; background-color: #fff4e0; color:
   <div class="demo-rows">
     <div class="demo-line"><b class="demo-half">בוקר</b><div class="demo-group" id="g-mt"><span>טמפ׳:</span></div><div class="demo-group" id="g-mr"><span>גשם:</span></div></div>
     <div class="demo-line"><b class="demo-half">אחה״צ</b><div class="demo-group" id="g-at"><span>טמפ׳:</span></div><div class="demo-group" id="g-ar"><span>גשם:</span></div></div>
+    <div class="demo-line"><b class="demo-half">רוח</b><div class="demo-group" id="g-wd"></div></div>
   </div>
 </div>
 <div id="app"></div>
@@ -77,9 +78,10 @@ try {{ if (localStorage.getItem('mc.demoVer') !== '4') {{ localStorage.setItem('
 {js}
 const TEMPS = [10, 13, 16, 19, 22, 25, 28, 31].map((t) => [t, t + '°']);
 const RAINS = [[0, 'בלי'], [1, 'קל'], [2, 'חזק']];
+const WINDS = [[0, 'רגילה'], [1, 'חזקה']];
 const KID1 = {{ id: 'a', name: 'ראם', age: 8, look: 'boy', skin: 0, hair: 0, hairStyle: 'short', color: '#7ec8e3', offset: 0 }};
 const KID2 = {{ id: 'b', name: 'סער', age: 4, look: 'boy', skin: 0, hair: 1, hairStyle: 'curly', color: '#ffcf3f', offset: 0 }};
-const st = {{ mt: 2, mr: 0, at: 5, ar: 0 }};
+const st = {{ mt: 2, mr: 0, at: 5, ar: 0, wd: 0 }};
 function chips(id, list, key) {{
   const g = document.getElementById(id);
   list.forEach(([, label], i) => {{
@@ -88,9 +90,9 @@ function chips(id, list, key) {{
     g.appendChild(b);
   }});
 }}
-chips('g-mt', TEMPS, 'mt'); chips('g-mr', RAINS, 'mr'); chips('g-at', TEMPS, 'at'); chips('g-ar', RAINS, 'ar');
+chips('g-mt', TEMPS, 'mt'); chips('g-mr', RAINS, 'mr'); chips('g-at', TEMPS, 'at'); chips('g-ar', RAINS, 'ar'); chips('g-wd', WINDS, 'wd');
 // morning = until 11:00, afternoon = from 12:00; temperature eases between them over 11–13
-function makeDay(mT, aT, mR, aR) {{
+function makeDay(mT, aT, mR, aR, windy) {{
   const hours = [];
   for (let h = 0; h < 24; h++) {{
     const k = h <= 10 ? 0 : h >= 13 ? 1 : (h - 10) / 3;
@@ -101,19 +103,19 @@ function makeDay(mT, aT, mR, aR) {{
       pop: r === 2 ? 95 : r === 1 ? 70 : 5,
       precip: r === 2 ? 3 : r === 1 ? 0.5 : 0,
       code: r === 2 ? 65 : r === 1 ? 61 : t >= 22 ? 0 : 2,
-      wind: 10, uv: h >= 9 && h <= 15 ? (t >= 24 ? 8 : 3) : 1, day: h >= 6 && h < 18 ? 1 : 0,
+      wind: windy ? 42 : 10, gust: windy ? 70 : 18, uv: h >= 9 && h <= 15 ? (t >= 24 ? 8 : 3) : 1, day: h >= 6 && h < 18 ? 1 : 0,
     }});
   }}
   return hours;
 }}
 function apply() {{
-  for (const id of ['mt', 'mr', 'at', 'ar'])
+  for (const id of ['mt', 'mr', 'at', 'ar', 'wd'])
     document.querySelectorAll('#g-' + id + ' button').forEach((b, i) => b.setAttribute('aria-pressed', String(i === st[id])));
   const cur = window.__demo.kids;
   const kids = cur && cur.length ? cur : [KID1, KID2];
   const mT = TEMPS[st.mt][0], aT = TEMPS[st.at][0];
   const label = 'בוקר ' + mT + '° ' + RAINS[st.mr][1] + ' גשם · אחה״צ ' + aT + '° ' + RAINS[st.ar][1] + ' גשם';
-  window.__demo.set('custom', 8, label, kids, 'none', makeDay(mT, aT, RAINS[st.mr][0], RAINS[st.ar][0]));
+  window.__demo.set('custom', 8, label, kids, 'none', makeDay(mT, aT, RAINS[st.mr][0], RAINS[st.ar][0], WINDS[st.wd][0]));
 }}
 apply();
 </script>

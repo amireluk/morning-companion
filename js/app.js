@@ -3,6 +3,7 @@ import { planOutfit, phasesOf, isRainy, levelIndex, LEVEL_NAMES } from './outfit
 import { resolveLocation, fetchForecast, dateKey, iconKind, demoDay } from './weather.js';
 import { load, save, isReader } from './store.js';
 import { openSettings } from './settings.js';
+import { computeAlerts, baselineOf } from './alerts.js';
 
 const LABELS = {
   tee: 'חולצה קצרה', longsleeve: 'חולצה ארוכה', sweatshirt: 'סווטשירט', coat: 'מעיל',
@@ -97,7 +98,7 @@ function render() {
     body = `<div class="empty">${weatherIcon(state.error ? 'cloudy' : 'partly')}<div class="spinner"></div></div>`;
   } else {
     const win = day.filter((h) => h.hour >= settings.leaveHour && h.hour <= settings.returnHour);
-    body = timeline(win, readers) +
+    body = timeline(win, readers) + alertsRow(win, key) +
       scene(kids, planOutfit(win, 0, settings.rules), tomorrow);
   }
   app.innerHTML = header(tomorrow, date, readers) + body;
@@ -106,7 +107,7 @@ function render() {
 
 function header(tomorrow, date, readers) {
   const badge = tomorrow
-    ? `<div class="day-badge moon">${weatherIcon('clear', true)}${readers ? `<span>מחר · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`
+    ? `<div class="day-badge moon">${weatherIcon('sunrise')}${readers ? `<span>מחר · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`
     : `<div class="day-badge">${weatherIcon('clear')}${readers ? `<span>היום · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`;
   // the city name comes from a separate service; if it's unavailable, still say where
   const locName = DEMO ? `דמו: ${DEMO}` : state.loc?.name || (state.loc ? (state.loc.source === 'default' ? 'תל אביב' : 'המיקום שלך') : '');
@@ -142,6 +143,19 @@ function timeline(win, readers) {
   return `<section class="timeline">${tiles}</section>`;
 }
 
+// "שים לב" – only when there's something unusual to point out
+function alertsRow(win, key) {
+  // the past week (same hours) is the yardstick for "unusual"
+  const days = DEMO ? null : state.forecast?.days;
+  const past = days ? Object.keys(days).filter((k) => k < key).sort().slice(-7)
+    .map((k) => days[k].filter((h) => h.hour >= settings.leaveHour && h.hour <= settings.returnHour)) : [];
+  const alerts = computeAlerts(win, settings.rules, baselineOf(past));
+  if (!alerts.length) return '';
+  return `<section class="alerts" aria-label="שים לב"><b class="alerts-title">שים לב</b>` +
+    alerts.map((a) => `<div class="alert">${weatherIcon(a.icon)}<span>${esc(a.text)}</span></div>`).join('') +
+    `</section>`;
+}
+
 // All the kids together, dressed alike for leaving the house, with one row of
 // clothing cards and one bag for what's needed later.
 function scene(kids, plan, tomorrow) {
@@ -163,7 +177,7 @@ function scene(kids, plan, tomorrow) {
     ? `<div class="bag"><div class="bag-title">לקחת איתך</div><div class="bag-items">${plan.bag.map(card).join('')}</div>` +
       `<div class="bag-arrow">⬇</div><div class="bag-icon">${itemIcon('backpack')}</div></div>`
     : '';
-  const ribbon = tomorrow ? `<div class="tomorrow-ribbon">${weatherIcon('clear', true)}<span>מחר בבוקר</span></div>` : '';
+  const ribbon = tomorrow ? `<div class="tomorrow-ribbon">${weatherIcon('sunrise')}<span>מחר בבוקר</span></div>` : '';
   return `<main class="scene kids-${kids.length}">${ribbon}<div class="scene-body"><div class="figs">${figs}</div>${bag}</div>` +
     `<div class="items">${worn.map(card).join('')}</div></main>`;
 }

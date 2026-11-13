@@ -233,8 +233,12 @@ body.tomorrow {
 .bag-icon { width: clamp(60px, 14vh, 150px); display: flex; }
 .bag-icon svg { width: 100%; height: auto; }
 
-.bag .card { width: clamp(50px, 10vh, 110px); }
-.bag .bag-icon { width: clamp(50px, 11vh, 120px); }
+/* scale with the scene's height so the panel never spills onto the cards */
+.bag { max-height: 100%; gap: min(1vh, 2cqh); padding-block: min(1.6vh, 3cqh); }
+.bag .card { width: clamp(44px, min(10vh, 24cqh), 110px); }
+.bag .bag-icon { width: clamp(40px, min(11vh, 24cqh), 120px); }
+.bag .bag-title { font-size: clamp(13px, min(2.4vh, 6cqh), 26px); }
+.bag .bag-arrow { font-size: clamp(14px, min(3.4vh, 7cqh), 36px); }
 
 /* what to wear, as cards under the figure */
 .items {
@@ -471,6 +475,46 @@ legend { font-weight: 700; padding: 0 6px; }
   .rules { min-width: 600px; }
 }
 
+/* "שים לב" row: only shown when something is unusual */
+.alerts {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .6vh 1vw;
+  padding: .8vh 1.2vw;
+  border-radius: 20px;
+  background: #fff1d6;
+  border: 3px solid #f0c27a;
+}
+.alerts-title {
+  font-size: clamp(15px, 2.4vh, 26px);
+  color: #9a5a12;
+  padding-inline-end: .4em;
+}
+.alerts-title::before { content: '⚠️ '; }
+.alert {
+  display: flex;
+  align-items: center;
+  gap: .4em;
+  padding: .15em .8em .15em .5em;
+  border-radius: 99px;
+  background: #fffaf0;
+  border: 2px solid #f3d29c;
+  font-weight: 700;
+  font-size: clamp(14px, 2.2vh, 24px);
+  color: var(--ink);
+}
+.alert .wx-svg { height: 1.7em; width: auto; flex: none; }
+.tomorrow .alerts { background: #ecebff; border-color: #b9b3e0; }
+.tomorrow .alerts-title { color: #2f3c6e; }
+@media (max-width: 700px), (max-height: 500px) {
+  .alerts { padding: 8px; gap: 6px; border-radius: 16px; justify-content: flex-start; }
+  .alerts-title { width: 100%; font-size: 16px; }
+  .alert { font-size: 14px; }
+}
+
 /* ---- demo wrapper (single-look storybook page; day = paper, "tomorrow" = night sky) ---- */
 :root { --bar: #fffaf0; --bar-ink: #5b4634; --chip: #ffffff; --chip-on: #f08a4b; }
 html, body { height: 100%; }
@@ -501,6 +545,7 @@ body { display: flex; flex-direction: column; background-color: #fff4e0; color: 
   <div class="demo-rows">
     <div class="demo-line"><b class="demo-half">בוקר</b><div class="demo-group" id="g-mt"><span>טמפ׳:</span></div><div class="demo-group" id="g-mr"><span>גשם:</span></div></div>
     <div class="demo-line"><b class="demo-half">אחה״צ</b><div class="demo-group" id="g-at"><span>טמפ׳:</span></div><div class="demo-group" id="g-ar"><span>גשם:</span></div></div>
+    <div class="demo-line"><b class="demo-half">רוח</b><div class="demo-group" id="g-wd"></div></div>
   </div>
 </div>
 <div id="app"></div>
@@ -967,6 +1012,17 @@ function weatherIcon(kind, night = false) {
     case 'rain': s = cloud(0, -10, '#dfe7f0', '#6f86a0') + drops(3); break;
     case 'storm': s = cloud(0, -12, '#c9d3df', '#5c6f86') + `<path d="M52,58 L40,78 L52,78 L44,96 L64,70 L52,70 L60,58 Z" fill="#ffd23f" stroke="#e0a21f" stroke-width="2.5" stroke-linejoin="round"/>`; break;
     case 'snow': s = cloud(0, -10) + `<g fill="#9fc9ef"><circle cx="32" cy="84" r="5"/><circle cx="50" cy="92" r="5"/><circle cx="68" cy="84" r="5"/></g>`; break;
+    case 'sunrise': { // tomorrow morning: a sun rising over the horizon
+      let rays = '';
+      for (const a of [-150, -120, -90, -60, -30]) {
+        const r = (a * Math.PI) / 180;
+        rays += `M${50 + Math.cos(r) * 30},${66 + Math.sin(r) * 30} L${50 + Math.cos(r) * 40},${66 + Math.sin(r) * 40} `;
+      }
+      s = line(rays, '#f7a928', 5) +
+        `<path d="M28,66 A22,22 0 0,1 72,66 Z" fill="#ffd23f" stroke="#f7a928" stroke-width="3"/>` +
+        line('M10,68 L90,68', '#f2a65a', 5) + line('M24,80 L76,80', '#f2a65a', 4, 'opacity="0.6"');
+      break;
+    }
     case 'wind': s = line('M14,38 L60,38 Q74,38 74,28 Q74,18 64,20 M14,54 L78,54 Q90,54 90,64 Q90,74 80,72 M14,70 L52,70', '#7d93ab', 6); break;
     default: s = cloud();
   }
@@ -1128,6 +1184,96 @@ function sameWear(a, b) {
   return a.layers.join() === b.layers.join() && a.acc.join() === b.acc.join();
 }
 
+// "שים לב" – short notes about things that are really out of the ordinary in
+// the hours the kids are out. Meant to show up about once a week or two, not
+// daily: heat, cold and big morning→noon swings are judged against the past
+// week (so a normal summer heat or winter cold says nothing), while heavy
+// rain, strong wind, storms and snow are rare enough to judge on their own.
+// Returns at most three, most important first; usually none.
+
+
+const A = {
+  heavyRainDayMm: 15, // total over the window
+  heavyRainHourMm: 6, // any single hour
+  windKmh: 40,
+  gustKmh: 65,
+  // compared with the past week's average (same hours of the day)
+  hotterBy: 6, // peak feels-like this much above the week's typical peak …
+  hotMin: 28, // … and at least this hot
+  colderBy: 6, // coldest feels-like this much below the week's typical low …
+  coldMax: 16, // … and at most this cold
+  swingBy: 5, // morning→later rise this much bigger than the week's usual rise …
+  swingMin: 12, // … and at least this big
+  strongUv: 8, // mentioned only together with a swing
+  // with no past data (offline, demo): only true extremes
+  absHot: 38,
+  absCold: 3,
+  absSwing: 15,
+};
+
+const later = (hour) => (hour < 14 ? 'בצהריים' : 'אחר הצהריים');
+const word = (t, rules) => LEVEL_NAMES[levelIndex(t, rules)];
+
+// The numbers a day is judged by, for the hours the kids are out.
+function dayStats(win) {
+  if (!win.length) return null;
+  const feels = win.map((h) => h.feels);
+  const ph = phasesOf(win);
+  const am = Math.min(...ph[0].map((h) => h.feels));
+  const rest = ph.slice(1).flat();
+  const warmest = rest.length ? rest.reduce((a, b) => (b.feels > a.feels ? b : a)) : null;
+  return {
+    low: Math.min(...feels),
+    peak: Math.max(...feels),
+    am,
+    warmest,
+    rise: warmest ? warmest.feels - am : 0,
+  };
+}
+
+// Average stats of the past days (each an array of the window's hours).
+function baselineOf(pastWindows) {
+  const stats = pastWindows.map(dayStats).filter(Boolean);
+  if (stats.length < 3) return null;
+  const avg = (k) => stats.reduce((s, x) => s + x[k], 0) / stats.length;
+  return { low: avg('low'), peak: avg('peak'), rise: avg('rise'), days: stats.length };
+}
+
+function computeAlerts(win, rules, base = null) {
+  const st = dayStats(win);
+  if (!st) return [];
+  const out = [];
+  const add = (rank, icon, text) => out.push({ rank, icon, text });
+  const totalMm = win.reduce((s, h) => s + (h.precip || 0), 0);
+  const maxMm = Math.max(...win.map((h) => h.precip || 0));
+  const maxWind = Math.max(...win.map((h) => h.wind || 0));
+  const maxGust = Math.max(...win.map((h) => h.gust || 0));
+  const maxUv = Math.max(...win.map((h) => h.uv || 0));
+  const has = (test) => win.some(test);
+
+  // rare on their own
+  if (has((h) => h.code >= 95)) add(1, 'storm', 'סופת רעמים צפויה');
+  if (has((h) => (h.code >= 71 && h.code <= 77) || h.code === 85 || h.code === 86)) add(2, 'snow', 'שלג צפוי');
+  if (totalMm >= A.heavyRainDayMm || maxMm >= A.heavyRainHourMm) add(3, 'rain', 'גשם חזק במיוחד');
+  if (maxWind >= A.windKmh || maxGust >= A.gustKmh) {
+    add(4, 'wind', `רוח חזקה${maxGust >= A.gustKmh ? ` – משבים עד ${Math.round(maxGust)} קמ״ש` : ''}`);
+  }
+
+  // unusual compared with the past week
+  const hot = base ? st.peak - base.peak >= A.hotterBy && st.peak >= A.hotMin : st.peak >= A.absHot;
+  const cold = base ? base.low - st.low >= A.colderBy && st.low <= A.coldMax : st.low <= A.absCold;
+  const swing = st.warmest && (base ? st.rise - base.rise >= A.swingBy && st.rise >= A.swingMin : st.rise >= A.absSwing);
+  if (hot) add(5, 'clear', `חם במיוחד${base ? ' לעומת הימים האחרונים' : ''} – מרגיש כמו ${Math.round(st.peak)}°, לשתות הרבה`);
+  if (cold) add(5, 'snow', `קר במיוחד${base ? ' לעומת הימים האחרונים' : ''} – מרגיש כמו ${Math.round(st.low)}°`);
+  if (swing) {
+    const w = st.warmest;
+    const sun = maxUv >= A.strongUv ? ' ושמש חזקה' : '';
+    add(6, 'partly', `בבוקר ${word(st.am, rules)} (${Math.round(st.am)}°), ${later(w.hour)} ${word(w.feels, rules)} (${Math.round(w.feels)}°)${sun}`);
+  }
+
+  return out.sort((a, b) => a.rank - b.rank).slice(0, 3);
+}
+
 // Location + forecast (Open-Meteo, free, no API key) with an offline cache,
 // plus synthetic demo days for trying the app without network.
 
@@ -1185,10 +1331,10 @@ async function searchCity(q) {
   }));
 }
 
-const HOURLY = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,uv_index,is_day';
+const HOURLY = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,uv_index,is_day';
 
 async function fetchForecast({ lat, lon }) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&hourly=${HOURLY}&timezone=auto&forecast_days=3`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&hourly=${HOURLY}&timezone=auto&past_days=7&forecast_days=3`; // past week: baseline for "unusual"
   try {
     const r = await fetch(url);
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -1202,7 +1348,7 @@ async function fetchForecast({ lat, lon }) {
   }
 }
 
-// → { 'YYYY-MM-DD': [ {hour, temp, feels, pop, precip, code, wind, uv, day} ] }
+// → { 'YYYY-MM-DD': [ {hour, temp, feels, pop, precip, code, wind, gust, uv, day} ] }
 function parse(j) {
   const h = j.hourly, out = {};
   h.time.forEach((t, i) => {
@@ -1215,6 +1361,7 @@ function parse(j) {
       precip: h.precipitation[i] ?? 0,
       code: h.weather_code[i] ?? 0,
       wind: h.wind_speed_10m[i] ?? 0,
+      gust: h.wind_gusts_10m?.[i] ?? 0,
       uv: h.uv_index[i] ?? 0,
       day: h.is_day[i] ?? 1,
     });
@@ -1643,7 +1790,7 @@ function render() {
     body = `<div class="empty">${weatherIcon(state.error ? 'cloudy' : 'partly')}<div class="spinner"></div></div>`;
   } else {
     const win = day.filter((h) => h.hour >= settings.leaveHour && h.hour <= settings.returnHour);
-    body = timeline(win, readers) +
+    body = timeline(win, readers) + alertsRow(win, key) +
       scene(kids, planOutfit(win, 0, settings.rules), tomorrow);
   }
   app.innerHTML = header(tomorrow, date, readers) + body;
@@ -1652,7 +1799,7 @@ function render() {
 
 function header(tomorrow, date, readers) {
   const badge = tomorrow
-    ? `<div class="day-badge moon">${weatherIcon('clear', true)}${readers ? `<span>מחר · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`
+    ? `<div class="day-badge moon">${weatherIcon('sunrise')}${readers ? `<span>מחר · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`
     : `<div class="day-badge">${weatherIcon('clear')}${readers ? `<span>היום · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`;
   // the city name comes from a separate service; if it's unavailable, still say where
   const locName = DEMO ? `דמו: ${DEMO}` : state.loc?.name || (state.loc ? (state.loc.source === 'default' ? 'תל אביב' : 'המיקום שלך') : '');
@@ -1688,6 +1835,19 @@ function timeline(win, readers) {
   return `<section class="timeline">${tiles}</section>`;
 }
 
+// "שים לב" – only when there's something unusual to point out
+function alertsRow(win, key) {
+  // the past week (same hours) is the yardstick for "unusual"
+  const days = DEMO ? null : state.forecast?.days;
+  const past = days ? Object.keys(days).filter((k) => k < key).sort().slice(-7)
+    .map((k) => days[k].filter((h) => h.hour >= settings.leaveHour && h.hour <= settings.returnHour)) : [];
+  const alerts = computeAlerts(win, settings.rules, baselineOf(past));
+  if (!alerts.length) return '';
+  return `<section class="alerts" aria-label="שים לב"><b class="alerts-title">שים לב</b>` +
+    alerts.map((a) => `<div class="alert">${weatherIcon(a.icon)}<span>${esc(a.text)}</span></div>`).join('') +
+    `</section>`;
+}
+
 // All the kids together, dressed alike for leaving the house, with one row of
 // clothing cards and one bag for what's needed later.
 function scene(kids, plan, tomorrow) {
@@ -1709,7 +1869,7 @@ function scene(kids, plan, tomorrow) {
     ? `<div class="bag"><div class="bag-title">לקחת איתך</div><div class="bag-items">${plan.bag.map(card).join('')}</div>` +
       `<div class="bag-arrow">⬇</div><div class="bag-icon">${itemIcon('backpack')}</div></div>`
     : '';
-  const ribbon = tomorrow ? `<div class="tomorrow-ribbon">${weatherIcon('clear', true)}<span>מחר בבוקר</span></div>` : '';
+  const ribbon = tomorrow ? `<div class="tomorrow-ribbon">${weatherIcon('sunrise')}<span>מחר בבוקר</span></div>` : '';
   return `<main class="scene kids-${kids.length}">${ribbon}<div class="scene-body"><div class="figs">${figs}</div>${bag}</div>` +
     `<div class="items">${worn.map(card).join('')}</div></main>`;
 }
@@ -1761,9 +1921,10 @@ window.__demo = { set(d, h, label, kids, rain, day) { DEMO_DAY = day || null; DE
 
 const TEMPS = [10, 13, 16, 19, 22, 25, 28, 31].map((t) => [t, t + '°']);
 const RAINS = [[0, 'בלי'], [1, 'קל'], [2, 'חזק']];
+const WINDS = [[0, 'רגילה'], [1, 'חזקה']];
 const KID1 = { id: 'a', name: 'ראם', age: 8, look: 'boy', skin: 0, hair: 0, hairStyle: 'short', color: '#7ec8e3', offset: 0 };
 const KID2 = { id: 'b', name: 'סער', age: 4, look: 'boy', skin: 0, hair: 1, hairStyle: 'curly', color: '#ffcf3f', offset: 0 };
-const st = { mt: 2, mr: 0, at: 5, ar: 0 };
+const st = { mt: 2, mr: 0, at: 5, ar: 0, wd: 0 };
 function chips(id, list, key) {
   const g = document.getElementById(id);
   list.forEach(([, label], i) => {
@@ -1772,9 +1933,9 @@ function chips(id, list, key) {
     g.appendChild(b);
   });
 }
-chips('g-mt', TEMPS, 'mt'); chips('g-mr', RAINS, 'mr'); chips('g-at', TEMPS, 'at'); chips('g-ar', RAINS, 'ar');
+chips('g-mt', TEMPS, 'mt'); chips('g-mr', RAINS, 'mr'); chips('g-at', TEMPS, 'at'); chips('g-ar', RAINS, 'ar'); chips('g-wd', WINDS, 'wd');
 // morning = until 11:00, afternoon = from 12:00; temperature eases between them over 11–13
-function makeDay(mT, aT, mR, aR) {
+function makeDay(mT, aT, mR, aR, windy) {
   const hours = [];
   for (let h = 0; h < 24; h++) {
     const k = h <= 10 ? 0 : h >= 13 ? 1 : (h - 10) / 3;
@@ -1785,19 +1946,19 @@ function makeDay(mT, aT, mR, aR) {
       pop: r === 2 ? 95 : r === 1 ? 70 : 5,
       precip: r === 2 ? 3 : r === 1 ? 0.5 : 0,
       code: r === 2 ? 65 : r === 1 ? 61 : t >= 22 ? 0 : 2,
-      wind: 10, uv: h >= 9 && h <= 15 ? (t >= 24 ? 8 : 3) : 1, day: h >= 6 && h < 18 ? 1 : 0,
+      wind: windy ? 42 : 10, gust: windy ? 70 : 18, uv: h >= 9 && h <= 15 ? (t >= 24 ? 8 : 3) : 1, day: h >= 6 && h < 18 ? 1 : 0,
     });
   }
   return hours;
 }
 function apply() {
-  for (const id of ['mt', 'mr', 'at', 'ar'])
+  for (const id of ['mt', 'mr', 'at', 'ar', 'wd'])
     document.querySelectorAll('#g-' + id + ' button').forEach((b, i) => b.setAttribute('aria-pressed', String(i === st[id])));
   const cur = window.__demo.kids;
   const kids = cur && cur.length ? cur : [KID1, KID2];
   const mT = TEMPS[st.mt][0], aT = TEMPS[st.at][0];
   const label = 'בוקר ' + mT + '° ' + RAINS[st.mr][1] + ' גשם · אחה״צ ' + aT + '° ' + RAINS[st.ar][1] + ' גשם';
-  window.__demo.set('custom', 8, label, kids, 'none', makeDay(mT, aT, RAINS[st.mr][0], RAINS[st.ar][0]));
+  window.__demo.set('custom', 8, label, kids, 'none', makeDay(mT, aT, RAINS[st.mr][0], RAINS[st.ar][0], WINDS[st.wd][0]));
 }
 apply();
 </script>

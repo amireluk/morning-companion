@@ -1,8 +1,8 @@
 // App shell cache. Forecast data is cached by the app itself (localStorage).
-const CACHE = 'mc-v1';
+const CACHE = 'mc-v2';
 const SHELL = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',
-  'js/app.js', 'js/art.js', 'js/outfit.js', 'js/weather.js', 'js/store.js', 'js/settings.js',
+  'js/app.js', 'js/alerts.js', 'js/art.js', 'js/outfit.js', 'js/weather.js', 'js/store.js', 'js/settings.js',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 

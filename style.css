@@ -222,8 +222,12 @@ body.tomorrow {
 .bag-icon { width: clamp(60px, 14vh, 150px); display: flex; }
 .bag-icon svg { width: 100%; height: auto; }
 
-.bag .card { width: clamp(50px, 10vh, 110px); }
-.bag .bag-icon { width: clamp(50px, 11vh, 120px); }
+/* scale with the scene's height so the panel never spills onto the cards */
+.bag { max-height: 100%; gap: min(1vh, 2cqh); padding-block: min(1.6vh, 3cqh); }
+.bag .card { width: clamp(44px, min(10vh, 24cqh), 110px); }
+.bag .bag-icon { width: clamp(40px, min(11vh, 24cqh), 120px); }
+.bag .bag-title { font-size: clamp(13px, min(2.4vh, 6cqh), 26px); }
+.bag .bag-arrow { font-size: clamp(14px, min(3.4vh, 7cqh), 36px); }
 
 /* what to wear, as cards under the figure */
 .items {
@@ -458,4 +462,44 @@ legend { font-weight: 700; padding: 0 6px; }
   .sw { width: 40px; height: 40px; }
   .panel .row { gap: 10px; }
   .rules { min-width: 600px; }
+}
+
+/* "שים לב" row: only shown when something is unusual */
+.alerts {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .6vh 1vw;
+  padding: .8vh 1.2vw;
+  border-radius: 20px;
+  background: #fff1d6;
+  border: 3px solid #f0c27a;
+}
+.alerts-title {
+  font-size: clamp(15px, 2.4vh, 26px);
+  color: #9a5a12;
+  padding-inline-end: .4em;
+}
+.alerts-title::before { content: '⚠️ '; }
+.alert {
+  display: flex;
+  align-items: center;
+  gap: .4em;
+  padding: .15em .8em .15em .5em;
+  border-radius: 99px;
+  background: #fffaf0;
+  border: 2px solid #f3d29c;
+  font-weight: 700;
+  font-size: clamp(14px, 2.2vh, 24px);
+  color: var(--ink);
+}
+.alert .wx-svg { height: 1.7em; width: auto; flex: none; }
+.tomorrow .alerts { background: #ecebff; border-color: #b9b3e0; }
+.tomorrow .alerts-title { color: #2f3c6e; }
+@media (max-width: 700px), (max-height: 500px) {
+  .alerts { padding: 8px; gap: 6px; border-radius: 16px; justify-content: flex-start; }
+  .alerts-title { width: 100%; font-size: 16px; }
+  .alert { font-size: 14px; }
 }
