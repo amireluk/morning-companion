@@ -1,5 +1,5 @@
 import { searchCity, TEL_AVIV } from './weather.js';
-import { newKid } from './store.js';
+import { newKid, MAX_KIDS } from './store.js';
 import { SKINS, HAIRS, SHIRT_COLORS, drawKid, hairStyleOf, itemIcon } from './art.js';
 import { LEVEL_NAMES, defaultRules, normalizeRules } from './outfit.js';
 
@@ -10,7 +10,6 @@ const hourOpts = (sel, from, to) => {
 };
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const PREVIEW = { shirt: 'tee', bottom: 'pants', shoes: 'sneakers', layers: [], acc: [] };
-const OFFSETS = [[-4, 'תמיד קר לו ❄️❄️'], [-2, 'קצת קר לו ❄️'], [0, 'רגיל'], [2, 'קצת חם לו 🔥'], [4, 'תמיד חם לו 🔥🔥']];
 
 export function openSettings(current, onSave) {
   const s = structuredClone(current);
@@ -38,9 +37,6 @@ export function openSettings(current, onSave) {
         <div class="row"><span>עור</span>${swatches(SKINS, k.skin, 'skin')}</div>
         <div class="row"><span>שיער</span>${swatches(HAIRS, k.hair, 'hair')}</div>
         <div class="row"><span>חולצה</span>${swatches(SHIRT_COLORS, k.color, 'color')}</div>
-        <label>מרגיש/ה
-          <select data-k="${i}" data-f="offset">${OFFSETS.map(([v, t]) => `<option value="${v}"${v === (k.offset || 0) ? ' selected' : ''}>${t}</option>`).join('')}</select>
-        </label>
         ${s.kids.length > 1 ? `<button type="button" class="remove" data-remove="${i}">הסרה</button>` : ''}
       </div></div>`;
   }
@@ -99,7 +95,7 @@ export function openSettings(current, onSave) {
       </fieldset>
       <fieldset><legend>ילדים</legend>
         ${s.kids.map(kidHtml).join('')}
-        ${s.kids.length < 4 ? '<button type="button" class="add">+ הוספת ילד/ה</button>' : ''}
+        ${s.kids.length < MAX_KIDS ? '<button type="button" class="add">+ הוספת ילד/ה</button>' : ''}
       </fieldset>
       ${rulesHtml()}
       <div class="actions"><button type="submit" class="save">שמירה</button><button type="button" class="cancel">ביטול</button></div>
@@ -135,7 +131,10 @@ export function openSettings(current, onSave) {
     if (el.dataset.lv != null) {
       const lvl = s.rules.levels[+el.dataset.lv], lf = el.dataset.lf;
       lvl[lf] = el.type === 'checkbox' ? el.checked : lf === 'max' ? Number(el.value) : el.value;
-      if (lf === 'max') draw(); // the next row's range label follows
+      if (lf === 'max') { // the next row's range label follows
+        const next = dlg.querySelectorAll('.rules td.rng bdi')[+el.dataset.lv];
+        if (next) next.textContent = `${lvl.max}°`;
+      }
       return;
     }
     if (el.dataset.rain) { s.rules.rain[el.dataset.rain] = Number(el.value); return; }
@@ -144,7 +143,10 @@ export function openSettings(current, onSave) {
     if (el.dataset.k != null) {
       const k = s.kids[+el.dataset.k];
       k[f] = f === 'name' ? el.value.trim() : Number(el.value);
-      if (f === 'age') draw(); // figure size follows age
+      if (f === 'age') { // refresh this kid's preview only (see openWelcome)
+        const prev = dlg.querySelectorAll('.kid-edit .kid-prev')[+el.dataset.k];
+        if (prev) prev.innerHTML = drawKid(k, PREVIEW);
+      }
     } else {
       s[f] = Number(el.value);
     }
@@ -179,4 +181,70 @@ export function openSettings(current, onSave) {
   }
 
   draw();
+}
+
+// First load: a short, friendly screen that asks who the kids are.
+export function openWelcome(current, onDone) {
+  const kids = structuredClone(current.kids && current.kids.length ? current.kids : [newKid(0)]);
+  const dlg = document.createElement('div');
+  dlg.className = 'settings welcome';
+  document.body.appendChild(dlg);
+
+  const row = (k, i) => `<div class="w-kid">
+      <div class="kid-prev">${drawKid(k, PREVIEW)}</div>
+      <div class="w-fields">
+        <input id="w-name-${i}" data-i="${i}" data-f="name" value="${esc(k.name)}" placeholder="שם" aria-label="שם הילד/ה" autocomplete="off">
+        <label class="w-age">גיל <input id="w-age-${i}" type="number" min="2" max="14" data-i="${i}" data-f="age" value="${k.age}"></label>
+        <div class="row">
+          <button type="button" class="pill${k.look === 'boy' ? ' on' : ''}" data-i="${i}" data-look="boy">ילד</button>
+          <button type="button" class="pill${k.look === 'girl' ? ' on' : ''}" data-i="${i}" data-look="girl">ילדה</button>
+          ${kids.length > 1 ? `<button type="button" class="remove" data-del="${i}" aria-label="הסרה">✕</button>` : ''}
+        </div>
+      </div></div>`;
+
+  function draw() {
+    dlg.innerHTML = `<form class="panel">
+      <h2>בוקר טוב! מי הילדים?</h2>
+      <div class="hint">כל בוקר נראה להם מה ללבוש לפי מזג האוויר. אפשר לשנות הכול אחר כך בלחיצה ארוכה על ⚙.</div>
+      <div class="w-list">${kids.map(row).join('')}</div>
+      ${kids.length < MAX_KIDS ? '<button type="button" class="add">+ עוד ילד/ה</button>' : ''}
+      <div class="actions"><button type="submit" class="save">יאללה, מתחילים</button></div>
+    </form>`;
+  }
+  const sync = () => dlg.querySelectorAll('input[data-f]').forEach((el) => {
+    const k = kids[+el.dataset.i];
+    if (el.dataset.f === 'name') k.name = el.value.trim();
+    else k.age = Math.max(2, Math.min(14, Number(el.value) || k.age));
+  });
+
+  dlg.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    sync();
+    if (b.classList.contains('add')) { kids.push(newKid(kids.length)); draw(); dlg.querySelector(`#w-name-${kids.length - 1}`)?.focus(); return; }
+    if (b.dataset.del != null) { kids.splice(+b.dataset.del, 1); return draw(); }
+    if (b.dataset.look) {
+      const k = kids[+b.dataset.i];
+      k.look = b.dataset.look;
+      k.hairStyle = k.look === 'girl' ? 'long' : 'short';
+      draw();
+    }
+  });
+  // update just this kid's preview (a full redraw here would swallow a click
+  // on a button pressed right after typing the age)
+  dlg.addEventListener('change', (e) => {
+    if (e.target.dataset.f !== 'age') return;
+    sync();
+    const i = +e.target.dataset.i;
+    const prev = dlg.querySelectorAll('.w-kid .kid-prev')[i];
+    if (prev) prev.innerHTML = drawKid(kids[i], PREVIEW);
+  });
+  dlg.addEventListener('submit', (e) => {
+    e.preventDefault();
+    sync();
+    dlg.remove();
+    onDone(kids);
+  });
+  draw();
+  dlg.querySelector('#w-name-0')?.focus();
 }

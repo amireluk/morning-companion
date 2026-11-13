@@ -1,0 +1,1745 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>מה לובשים היום?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #3d2b1f;
+  --paper: #fff4e0;
+  --card: #fffdf8;
+  --edge: #ecd9b8;
+  --muted: #9c8468;
+  --accent: #f08a4b;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Fredoka', 'Varela Round', system-ui, sans-serif;
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body {
+  background:
+    radial-gradient(circle at 85% 0%, #ffe7b8 0, transparent 40%),
+    radial-gradient(circle at 0% 100%, #ffe1cf 0, transparent 45%),
+    var(--paper);
+  transition: background 1s;
+}
+
+body.tomorrow {
+  --paper: #2f3c6e;
+  --card: #f4f2ff;
+  --edge: #b9b3e0;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(255,255,255,.18) 0 1.5px, transparent 2px) 0 0 / 90px 70px,
+    radial-gradient(circle at 60% 40%, rgba(255,255,255,.14) 0 1px, transparent 2px) 0 0 / 130px 110px,
+    linear-gradient(#26305c, #46558c);
+}
+
+#app {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2vh;
+  padding: max(1.4vh, env(safe-area-inset-top)) 1.6vw 1.6vh;
+}
+
+/* ---------- header ---------- */
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 7vh;
+  min-height: 40px;
+}
+.day-badge {
+  display: flex;
+  align-items: center;
+  gap: .6em;
+  height: 100%;
+  font-size: clamp(16px, 2.8vh, 30px);
+  font-weight: 700;
+}
+.day-badge .wx-svg { height: 100%; width: auto; }
+.tomorrow .day-badge { color: #fff4c2; }
+.where {
+  display: flex;
+  align-items: center;
+  gap: .5em;
+  color: var(--muted);
+  font-size: clamp(12px, 1.8vh, 18px);
+}
+.tomorrow .where { color: #c7c9ec; }
+.stale { width: .7em; height: .7em; border-radius: 50%; background: #f0b44b; display: inline-block; }
+.gear {
+  border: 0;
+  background: none;
+  font-size: clamp(18px, 3vh, 28px);
+  color: inherit;
+  opacity: .35;
+  padding: .3em;
+  border-radius: 50%;
+  touch-action: none;
+}
+.gear.pressing { opacity: 1; background: rgba(240,138,75,.25); transition: background 1.2s; }
+
+/* ---------- timeline: morning / noon / evening ---------- */
+.timeline {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.4vw;
+  height: 16vh;
+  min-height: 90px;
+}
+.phase {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1vw;
+  min-width: 0;
+  padding: 1vh 1vw;
+  border-radius: 26px;
+  background: var(--card);
+  border: 3px solid var(--edge);
+}
+.phase .sky-svg { height: clamp(28px, 7vh, 70px); width: auto; flex: none; }
+.phase .wx-svg { height: clamp(44px, 12vh, 120px); width: auto; flex: none; }
+.ptext { display: flex; flex-direction: column; align-items: center; gap: .6vh; }
+.pname { font-weight: 700; font-size: clamp(14px, 2.4vh, 26px); line-height: 1; }
+.tchip {
+  min-width: 9vh;
+  height: 4.4vh;
+  min-height: 22px;
+  padding: 0 .6em;
+  border-radius: 99px;
+  border: 2.5px solid rgba(61,43,31,.25);
+  font-weight: 700;
+  font-size: clamp(13px, 2.4vh, 26px);
+  display: grid;
+  place-items: center;
+}
+.pfeel { font-weight: 700; font-size: clamp(13px, 2.2vh, 24px); line-height: 1; }
+.pop { font-size: clamp(12px, 2vh, 20px); color: #3d8fe0; font-weight: 700; line-height: 1; }
+
+/* ---------- the scene: all kids together ---------- */
+.scene {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 3px solid var(--edge);
+  border-radius: 30px;
+  padding: 1.4vh 1.4vw 1.2vh;
+}
+.scene-body {
+  flex: 1;
+  min-height: 0;
+  container-type: size; /* figures are sized from this box's height */
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 3vw;
+}
+.figs {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 1.5vw;
+}
+.fig {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.fig-art {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.fig-name {
+  flex: none;
+  margin-top: .4vh;
+  font-weight: 700;
+  font-size: clamp(16px, 3vh, 32px);
+  padding: .05em .8em;
+  border-radius: 99px;
+  background: var(--c);
+  border: 3px solid var(--ink);
+}
+.kid-svg {
+  /* full scene height minus room for the name tag, scaled by age */
+  height: calc((100cqh - 56px) * var(--h, 100) / 100);
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 270 / 410;
+}
+.kid-svg.tall { aspect-ratio: 270 / 470; }
+
+/* the bag: items needed later, going into the backpack */
+.bag {
+  flex: none;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1vh;
+  padding: 1.6vh 1.2vw;
+  border: 3px dashed #e7b77a;
+  border-radius: 26px;
+  background: #fff6ea;
+  max-width: 45%;
+}
+.bag-title { font-weight: 700; font-size: clamp(14px, 2.4vh, 26px); color: #b5702f; }
+.bag-items { display: flex; flex-wrap: wrap; justify-content: center; gap: 1vh; }
+.card {
+  width: clamp(56px, 12vh, 130px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fff;
+  border: 3px solid var(--edge);
+  border-radius: 20px;
+  padding: 4px;
+}
+.card .item-svg { width: 100%; height: auto; }
+.clabel { font-size: clamp(11px, 1.8vh, 18px); line-height: 1.1; text-align: center; padding-bottom: 2px; }
+.bag-arrow { font-size: clamp(18px, 3.4vh, 36px); color: #e7b77a; line-height: 1; }
+.bag-icon { width: clamp(60px, 14vh, 150px); display: flex; }
+.bag-icon svg { width: 100%; height: auto; }
+
+.bag .card { width: clamp(50px, 10vh, 110px); }
+.bag .bag-icon { width: clamp(50px, 11vh, 120px); }
+
+/* what to wear, as cards under the figure */
+.items {
+  flex: none;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: .6vw;
+  padding-top: 1vh;
+  margin-top: .6vh;
+  border-top: 3px dotted var(--edge);
+}
+.items .card { width: auto; flex: 0 1 clamp(50px, 10vh, 112px); min-width: min-content; }
+.items .clabel { font-size: clamp(10px, 1.6vh, 16px); }
+
+
+
+.empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2vh;
+}
+.empty .wx-svg { width: 30vh; opacity: .7; }
+.spinner {
+  width: 5vh; height: 5vh;
+  border: .7vh solid var(--edge);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- night dimming ---------- */
+body.night::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: .9;
+  pointer-events: none;
+  transition: opacity 2s;
+}
+
+/* ---------- settings ---------- */
+.settings {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgba(40, 28, 18, .55);
+  display: grid;
+  place-items: center;
+  user-select: text;
+}
+.panel {
+  width: min(960px, 94vw);
+  max-height: 94vh;
+  overflow: auto;
+  background: #fffdf8;
+  border-radius: 24px;
+  padding: 20px 24px;
+  font-size: 18px;
+  color: var(--ink);
+}
+.panel h2 { margin: 0 0 12px; }
+fieldset { min-width: 0; border: 2px solid var(--edge); border-radius: 16px; margin: 0 0 14px; padding: 10px 14px 14px; }
+legend { font-weight: 700; padding: 0 6px; }
+.panel label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0; }
+.panel input, .panel select, .panel button {
+  font: inherit;
+  font-size: 17px;
+  padding: 6px 10px;
+  border: 2px solid var(--edge);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+}
+.panel input[type=number] { width: 80px; }
+.panel .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.panel .row > span { min-width: 52px; }
+.pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sw { width: 34px; height: 34px; padding: 0 !important; border-radius: 50% !important; border: 3px solid #fff !important; box-shadow: 0 0 0 2px var(--edge); }
+.sw.on { box-shadow: 0 0 0 3px var(--ink); }
+.hint { color: var(--muted); font-size: 15px; }
+.kid-edit { display: flex; gap: 16px; padding: 10px 0; border-bottom: 2px dotted var(--edge); }
+.kid-edit:last-of-type { border-bottom: 0; }
+.kid-prev { width: 110px; flex: none; }
+.kid-prev svg { width: 100%; height: auto; }
+.kid-fields { flex: 1; }
+.remove { color: #c2453f; }
+.add { width: 100%; margin-top: 8px; }
+#cityres { display: flex; flex-direction: column; gap: 6px; }
+.city { text-align: start; }
+.city small { color: var(--muted); }
+.actions { display: flex; gap: 10px; position: sticky; bottom: -20px; background: #fffdf8; padding: 10px 0; }
+.save { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; font-weight: 700; flex: 1; }
+
+/* ---------- narrow screens (phones): let the page scroll, stack kids ---------- */
+@media (max-width: 700px) {
+  html, body { overflow: auto; }
+  #app { height: auto; min-height: 100%; gap: 10px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+  .top { height: 44px; }
+  .day-badge { font-size: 18px; }
+  .timeline { height: auto; min-height: 0; gap: 6px; }
+  .phase { flex-direction: column; gap: 4px; padding: 8px 4px; border-radius: 18px; }
+  .phase .sky-svg { height: 26px; }
+  .phase .wx-svg { height: 44px; }
+  .tchip { min-width: 60px; height: 24px; font-size: 13px; }
+  .scene { padding: 10px; border-radius: 22px; }
+  .scene-body { flex: none; container-type: normal; flex-direction: column; align-items: center; gap: 10px; }
+  .figs { gap: 4px; }
+  .fig-art { flex: none; }
+  .fig-name { font-size: 15px; }
+  .kid-svg { height: calc(var(--h, 100) * 2.6px); }
+  .kids-3 .kid-svg { height: calc(var(--h, 100) * 2px); }
+  .bag { max-width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .bag { padding: 10px 8px; border-radius: 18px; }
+  .items .card { width: auto; flex-basis: 56px; }
+  .card, .bag .card { width: 56px; border-radius: 14px; border-width: 2px; }
+  .bag-icon { width: 60px; }
+  .clabel { font-size: 11px; }
+}
+
+/* rules table in settings */
+.rules-wrap { overflow-x: auto; margin: 8px 0; }
+.rules { border-collapse: collapse; font-size: 15px; min-width: 700px; }
+.rules th, .rules td { padding: 4px 6px; text-align: center; border-bottom: 1px solid var(--edge); vertical-align: middle; }
+.rules thead th { font-weight: 500; color: var(--muted); font-size: 13px; line-height: 1.15; }
+.rules .th-ic { display: block; width: 30px; margin: 0 auto 2px; }
+.rules .th-ic svg { width: 100%; height: auto; }
+.rules th.lvl { text-align: start; font-weight: 700; white-space: nowrap; }
+.rules td.rng { white-space: nowrap; }
+.panel .rules input[type=number] { width: 58px; padding: 4px 6px; }
+.panel .rules select { font-size: 15px; padding: 4px 6px; }
+.rules input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--accent); }
+.panel label > span { display: inline-flex; align-items: center; gap: 6px; }
+.panel label > span input[type=number] { width: 72px; }
+
+/* welcome screen */
+.welcome .panel { width: min(640px, 94vw); }
+.welcome h2 { font-size: 28px; }
+.w-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+.w-kid { display: flex; gap: 14px; align-items: center; padding: 10px; border: 2px solid var(--edge); border-radius: 18px; }
+.w-kid .kid-prev { width: 80px; }
+.w-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.panel .w-fields input[data-f=name] { font-size: 22px; width: 100%; }
+.panel .w-age { justify-content: flex-start; margin: 0; }
+
+/* ---- demo wrapper (single-look storybook page; day = paper, "tomorrow" = night sky) ---- */
+:root { --bar: #fffaf0; --bar-ink: #5b4634; --chip: #ffffff; --chip-on: #f08a4b; }
+html, body { height: 100%; }
+html { background: #fff4e0; }
+body { display: flex; flex-direction: column; background-color: #fff4e0; color: var(--ink); direction: rtl; }
+.demo-bar {
+  flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px;
+  padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--bar); color: var(--bar-ink); border-bottom: 2px solid #ecd9b8; font-size: 14px;
+}
+.demo-bar b { font-weight: 700; }
+.demo-rows { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.demo-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+.demo-half { min-width: 3.2em; }
+.demo-group { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.demo-group span { color: #9c8468; margin-inline-end: 2px; }
+.demo-bar button {
+  font: inherit; font-size: 14px; padding: 4px 10px; border-radius: 99px; cursor: pointer;
+  border: 2px solid #ecd9b8; background: var(--chip); color: var(--bar-ink);
+}
+.demo-bar button[aria-pressed="true"] { background: var(--chip-on); border-color: var(--chip-on); color: #fff; }
+.demo-bar button:focus-visible { outline: 3px solid #3d8fe0; outline-offset: 2px; }
+#app { padding-left: max(1.6vw, env(safe-area-inset-left, 0px)); padding-right: max(1.6vw, env(safe-area-inset-right, 0px)); }
+@media (max-width: 700px) { .demo-bar { font-size: 13px; } html, body { overflow: auto; height: auto; min-height: 100%; } #app { flex: none; } }
+</style>
+<div class="demo-bar" id="demo-bar">
+  <b>תצוגת דמו</b>
+  <div class="demo-rows">
+    <div class="demo-line"><b class="demo-half">בוקר</b><div class="demo-group" id="g-mt"><span>טמפ׳:</span></div><div class="demo-group" id="g-mr"><span>גשם:</span></div></div>
+    <div class="demo-line"><b class="demo-half">אחה״צ</b><div class="demo-group" id="g-at"><span>טמפ׳:</span></div><div class="demo-group" id="g-ar"><span>גשם:</span></div></div>
+  </div>
+</div>
+<div id="app"></div>
+<script>
+try { if (localStorage.getItem('mc.demoVer') !== '4') { localStorage.setItem('mc.demoVer', '4'); localStorage.setItem('mc.demo.settings', JSON.stringify({ configured: true, kids: [{ id: 'a', name: 'ראם', age: 8, look: 'boy', skin: 0, hair: 0, hairStyle: 'short', color: '#7ec8e3', offset: 0 }, { id: 'b', name: 'סער', age: 4, look: 'boy', skin: 0, hair: 1, hairStyle: 'curly', color: '#ffcf3f', offset: 0 }] })); } } catch (e) {}
+</script>
+<script type="module">
+// Storybook-style SVG drawings: the kid figure (built from clothing layers),
+// clothing item icons and weather icons. Everything is drawn in code so any
+// combination of clothes composes automatically.
+
+const O = '#3d2b1f'; // outline colour
+const SW = 3; // outline width
+
+const SKINS = ['#fbd9b8', '#eebf94', '#cf9566', '#8f5c3c'];
+const HAIRS = ['#3b2416', '#7a4a24', '#d9a441', '#1f1a17', '#b5522b'];
+const SHIRT_COLORS = ['#ffcf3f', '#ff8fb1', '#7ec8e3', '#9ad97a', '#c79bf2', '#ff9f5a'];
+
+const COLORS = {
+  sweatshirt: '#f08a4b',
+  coat: '#7b5cd6',
+  pants: '#4a6fa5',
+  shorts: '#5fae6e',
+  sneakers: '#e5534b',
+  boots: '#f6c23e',
+  sandals: '#a8703f',
+  beanie: '#d94f70',
+  gloves: '#d94f70',
+  scarf: '#d94f70',
+  cap: '#3fa7a0',
+  umbrella: '#e5534b',
+  bottle: '#8fd0f2',
+  sunscreen: '#ffd166',
+  backpack: '#e98a3c',
+};
+
+const lerp = (a, b, t) => a + (b - a) * t;
+
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const c = (v) => Math.max(0, Math.min(255, Math.round(v + amt * 255)));
+  const r = c(n >> 16), g = c((n >> 8) & 255), b = c(n & 255);
+  return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+}
+
+// A limb/sleeve: thick round line with a darker outline line underneath.
+function limb(x1, y1, x2, y2, w, color) {
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${O}" stroke-width="${w + SW * 2}" stroke-linecap="round"/>` +
+    `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${w}" stroke-linecap="round"/>`;
+}
+
+function partial(x1, y1, x2, y2, frac, w, color) {
+  return limb(x1, y1, lerp(x1, x2, frac), lerp(y1, y2, frac), w, color);
+}
+
+const shape = (d, fill, extra = '') =>
+  `<path d="${d}" fill="${fill}" stroke="${O}" stroke-width="${SW}" stroke-linejoin="round" stroke-linecap="round" ${extra}/>`;
+const line = (d, color = O, w = SW, extra = '') =>
+  `<path d="${d}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" ${extra}/>`;
+
+// Body geometry (viewBox -10 -60 270 470, centre x = 120)
+const ARM_L = [92, 172, 70, 262];
+const ARM_R = [148, 172, 170, 262];
+const LEG_L = [108, 262, 105, 366];
+const LEG_R = [132, 262, 135, 366];
+
+const TORSO = {
+  shirt: 'M84,168 Q86,152 106,148 L134,148 Q154,152 156,168 L152,270 Q120,278 88,270 Z',
+  sweatshirt: 'M78,166 Q80,146 104,142 L136,142 Q160,146 162,166 L160,280 L80,280 Z',
+  // puffer: much wider than the body, scalloped sides, reaches mid-thigh
+  coat: 'M84,150 Q100,140 120,142 Q140,140 156,150 Q176,158 174,172 Q184,190 174,208 Q184,226 174,244 Q184,262 174,280 Q184,298 172,318 Q146,330 120,327 Q94,330 68,318 Q56,298 66,280 Q56,262 66,244 Q56,226 66,208 Q56,190 66,172 Q64,158 84,150 Z',
+};
+
+function drawShoes(kind, skin) {
+  let s = '';
+  for (const [x, flip] of [[104, -1], [136, 1]]) {
+    const y = 378;
+    if (kind === 'sneakers') {
+      const c = COLORS.sneakers;
+      s += shape(`M${x - 17},${y + 8} Q${x - 17},${y - 12} ${x},${y - 12} Q${x + 17},${y - 12} ${x + 17},${y + 8} Z`, c);
+      s += shape(`M${x - 19},${y + 6} L${x + 19},${y + 6} Q${x + 19},${y + 13} ${x + 12},${y + 13} L${x - 12},${y + 13} Q${x - 19},${y + 13} ${x - 19},${y + 6} Z`, '#ffffff');
+      s += line(`M${x - 6},${y - 4} L${x + 6},${y - 4} M${x - 6},${y + 1} L${x + 6},${y + 1}`, '#ffffff', 2.5);
+    } else if (kind === 'sandals') {
+      s += shape(`M${x - 13},${y + 6} Q${x - 13},${y - 12} ${x},${y - 12} Q${x + 13},${y - 12} ${x + 13},${y + 6} Z`, skin);
+      s += shape(`M${x - 18},${y + 6} L${x + 18},${y + 6} Q${x + 18},${y + 13} ${x + 11},${y + 13} L${x - 11},${y + 13} Q${x - 18},${y + 13} ${x - 18},${y + 6} Z`, COLORS.sandals);
+      s += line(`M${x - 13},${y - 4} L${x + 13},${y - 4} M${x - 12},${y + 2} L${x + 12},${y + 2}`, shade(COLORS.sandals, -0.1), 5);
+    } else if (kind === 'boots') {
+      const c = COLORS.boots;
+      s += shape(`M${x - 15},${y - 46} L${x + 15},${y - 46} L${x + 15},${y - 6} Q${x + 15 + flip * 6},${y - 4} ${x + 18 * 1},${y + 6} L${x + 18},${y + 9} L${x - 18},${y + 9} L${x - 18},${y + 6} Q${x - 18},${y - 4} ${x - 15},${y - 8} Z`, c);
+      s += shape(`M${x - 20},${y + 6} L${x + 20},${y + 6} L${x + 20},${y + 13} L${x - 20},${y + 13} Z`, '#5a4636');
+      s += line(`M${x - 15},${y - 38} L${x + 15},${y - 38}`, shade(c, -0.15), 4);
+      s += line(`M${x - 8},${y - 30} L${x - 8},${y - 10}`, '#fff8d6', 4, 'opacity="0.8"');
+    }
+  }
+  return s;
+}
+
+const circ = (x, y, r, fill) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${O}" stroke-width="${SW}"/>`;
+
+// hair styles: 'short', 'curly', 'long'
+function backHair(style, hair) {
+  if (style === 'long') {
+    return shape('M64,98 Q58,34 120,32 Q182,34 176,98 L182,176 Q168,190 152,172 L152,120 L88,120 L88,172 Q72,190 58,176 Z', hair);
+  }
+  if (style === 'curly') {
+    // volume behind the ears
+    return [[62, 96], [178, 96], [64, 120], [176, 120], [74, 138], [166, 138]].map(([x, y]) => circ(x, y, 15, hair)).join('');
+  }
+  return '';
+}
+
+function frontHair(style, hair, covered, bow) {
+  if (style === 'curly') {
+    if (covered) return [[66, 98], [174, 98], [70, 118], [170, 118]].map(([x, y]) => circ(x, y, 12, hair)).join('');
+    let s = shape('M66,96 Q62,40 120,38 Q178,40 174,96 Q120,70 66,96 Z', hair);
+    for (let a = -172; a <= -8; a += 16.4) {
+      const r = (a * Math.PI) / 180;
+      s += circ(120 + Math.cos(r) * 50, 94 + Math.sin(r) * 52, 14, hair);
+    }
+    for (let x = 84; x <= 156; x += 18) s += circ(x, 70 + Math.abs(x - 120) * 0.12, 11, hair);
+    return s;
+  }
+  if (covered) {
+    return style === 'long'
+      ? shape('M70,84 Q66,112 72,128 L80,128 Q78,104 84,86 Z', hair) + shape('M170,84 Q174,112 168,128 L160,128 Q162,104 156,86 Z', hair)
+      : '';
+  }
+  if (style === 'long') {
+    let s = shape('M66,100 Q60,36 120,34 Q180,36 174,100 Q168,72 150,62 Q140,80 118,74 Q98,84 82,70 Q70,80 66,100 Z', hair);
+    if (bow) {
+      s += shape('M150,52 L166,42 L168,62 Z', '#ff6b9a') + shape('M150,52 L136,40 L134,60 Z', '#ff6b9a') +
+        `<circle cx="150" cy="52" r="5" fill="#ff6b9a" stroke="${O}" stroke-width="${SW}"/>`;
+    }
+    return s;
+  }
+  return shape('M68,96 Q64,38 120,36 Q176,38 172,96 Q164,74 146,68 Q136,82 118,74 Q100,84 86,72 Q74,80 68,96 Z', hair);
+}
+
+const hairStyleOf = (child) => child.hairStyle || (child.look === 'girl' ? 'long' : 'short');
+
+function face(skin, mood) {
+  let s = '';
+  s += `<circle cx="68" cy="106" r="11" fill="${skin}" stroke="${O}" stroke-width="${SW}"/>`;
+  s += `<circle cx="172" cy="106" r="11" fill="${skin}" stroke="${O}" stroke-width="${SW}"/>`;
+  s += `<circle cx="120" cy="98" r="52" fill="${skin}" stroke="${O}" stroke-width="${SW}"/>`;
+  // eyes
+  s += `<ellipse cx="102" cy="104" rx="5.5" ry="7.5" fill="${O}"/><ellipse cx="138" cy="104" rx="5.5" ry="7.5" fill="${O}"/>`;
+  s += `<circle cx="104" cy="101" r="2" fill="#fff"/><circle cx="140" cy="101" r="2" fill="#fff"/>`;
+  // brows
+  s += line('M94,90 Q101,86 108,89') + line('M132,89 Q139,86 146,90');
+  // cheeks
+  const cheek = mood === 'cold' ? '#ff6f7d' : '#ff9a9a';
+  const op = mood === 'cold' ? 0.75 : 0.5;
+  s += `<ellipse cx="90" cy="120" rx="9" ry="6" fill="${cheek}" opacity="${op}"/><ellipse cx="150" cy="120" rx="9" ry="6" fill="${cheek}" opacity="${op}"/>`;
+  // nose + smile
+  s += line('M119,110 Q122,114 119,117', shade(skin, -0.3), 2.5);
+  s += shape('M106,124 Q120,140 134,124 Q120,130 106,124 Z', '#c2453f');
+  if (mood === 'hot') {
+    s += shape('M164,66 Q172,78 168,84 Q160,86 160,78 Q160,72 164,66 Z', '#8fd0f2');
+  }
+  if (mood === 'cold') {
+    s += `<g opacity="0.85" fill="#ffffff" stroke="#b9d4ee" stroke-width="2"><circle cx="152" cy="136" r="7"/><circle cx="164" cy="132" r="9"/><circle cx="178" cy="128" r="6"/></g>`;
+  }
+  return s;
+}
+
+function drawTop(kind, color, look) {
+  let s = shape(TORSO.shirt, color);
+  if (kind === 'longsleeve') {
+    // stripes
+    for (let y = 172; y < 268; y += 16) {
+      const half = lerp(35, 32, (y - 168) / 100);
+      s += line(`M${120 - half + 1},${y} L${120 + half - 1},${y}`, shade(color, 0.22), 6);
+    }
+    s += `<path d="${TORSO.shirt}" fill="none" stroke="${O}" stroke-width="${SW}" stroke-linejoin="round"/>`;
+  } else {
+    // tee motif
+    s += look === 'girl'
+      ? shape('M120,224 Q100,206 106,196 Q112,186 120,196 Q128,186 134,196 Q140,206 120,224 Z', '#ffffff')
+      : shape('M120,186 L126,200 L141,201 L129,210 L133,225 L120,216 L107,225 L111,210 L99,201 L114,200 Z', '#ffffff');
+  }
+  return s;
+}
+
+function drawSweatshirt(hood = true) {
+  const c = COLORS.sweatshirt;
+  let ticks = '';
+  for (let x = 86; x <= 154; x += 8) ticks += `M${x},282 L${x},292 `;
+  return shape(TORSO.sweatshirt, c) +
+    // ribbed hem band
+    shape('M80,278 L160,278 L158,294 Q120,300 82,294 Z', shade(c, -0.15)) + line(ticks, shade(c, -0.3), 2) +
+    // big kangaroo pocket
+    shape('M96,226 L144,226 L152,266 L88,266 Z', shade(c, -0.08)) +
+    (hood
+      // hood resting on the shoulders behind the neck (the head covers its top)
+      ? shape('M76,174 Q66,130 98,122 L142,122 Q174,130 164,174 Q120,190 76,174 Z', c) +
+        shape('M90,168 Q84,138 106,132 L134,132 Q156,138 150,168 Q120,180 90,168 Z', shade(c, -0.18))
+      : '') +
+    // drawstrings
+    line('M112,170 L109,202 M128,170 L131,202', '#ffffff', 4) +
+    `<circle cx="109" cy="204" r="3.5" fill="#ffffff" stroke="${O}" stroke-width="2"/><circle cx="131" cy="204" r="3.5" fill="#ffffff" stroke="${O}" stroke-width="2"/>`;
+}
+
+function drawCoat() {
+  const c = COLORS.coat;
+  let s = shape(TORSO.coat, c);
+  // puffy bands: highlight arc at the top of each band, seam at the bottom
+  for (const y of [184, 220, 256, 292]) s += line(`M${80},${y} Q120,${y - 8} ${160},${y}`, shade(c, 0.28), 5, 'opacity="0.7"');
+  for (const y of [208, 244, 280]) s += line(`M68,${y} Q120,${y + 10} 172,${y}`, shade(c, -0.22), 3);
+  s += line('M120,152 L120,326', shade(c, -0.32), 3);
+  s += shape('M115,176 L125,176 L125,190 L115,190 Z', '#e9e4ff');
+  s += shape('M80,262 L106,262 L106,274 L80,274 Z', shade(c, -0.1));
+  s += shape('M134,262 L160,262 L160,274 L134,274 Z', shade(c, -0.1));
+  // fur collar
+  for (let x = 88; x <= 152; x += 8) {
+    const t = (x - 120) / 32;
+    s += `<circle cx="${x}" cy="${(140 + 12 * (1 - t * t)).toFixed(1)}" r="9" fill="#f7f3ea" stroke="${O}" stroke-width="2.5"/>`;
+  }
+  return s;
+}
+
+function drawScarf() {
+  const c = COLORS.scarf;
+  return shape('M130,156 L146,232 L128,236 L118,160 Z', c) +
+    line('M124,196 L141,193 M126,210 L143,207', '#ffffff', 3) +
+    line('M131,237 L130,246 M137,236 L137,245 M143,234 L144,243', c, 3) +
+    shape('M92,138 Q120,156 148,138 L150,160 Q120,180 90,160 Z', c) +
+    line('M100,148 L101,164 M113,153 L113,170 M127,153 L127,170 M140,148 L139,164', '#ffffff', 3);
+}
+
+function drawBeanie() {
+  const c = COLORS.beanie;
+  return shape('M64,88 Q62,30 120,28 Q178,30 176,88 Z', c) +
+    line('M90,44 L88,86 M120,32 L120,86 M150,44 L152,86', shade(c, -0.12), 3) +
+    shape('M60,80 Q120,70 180,80 L180,96 Q120,86 60,96 Z', shade(c, -0.12)) +
+    `<circle cx="120" cy="24" r="13" fill="#ffffff" stroke="${O}" stroke-width="${SW}"/>`;
+}
+
+function drawCap() {
+  const c = COLORS.cap;
+  return shape('M136,76 Q196,70 208,86 Q194,98 136,90 Z', shade(c, -0.12)) +
+    shape('M68,84 Q70,32 120,30 Q170,32 172,84 Q120,76 68,84 Z', c) +
+    `<circle cx="120" cy="30" r="5" fill="${shade(c, -0.2)}" stroke="${O}" stroke-width="2"/>`;
+}
+
+function drawUmbrellaShaft(hx = 170) {
+  return line(`M178,-22 L${hx},276`, O, 7) + line(`M178,-22 L${hx},276`, '#8a6a4f', 3.5) +
+    line(`M${hx},276 Q${hx},290 ${hx - 12},288`, O, 6) + line(`M${hx},276 Q${hx},290 ${hx - 12},288`, '#8a6a4f', 3);
+}
+
+function drawUmbrellaCanopy() {
+  const c = COLORS.umbrella;
+  const d = 'M98,2 Q178,-84 258,2 Q238,-12 218,2 Q198,-12 178,2 Q158,-12 138,2 Q118,-12 98,2 Z';
+  return line('M178,-50 L178,-62', O, 5) +
+    shape(d, c) +
+    line('M178,-40 Q156,-24 138,2 M178,-40 Q200,-24 218,2', shade(c, -0.15), 3) +
+    shape('M178,-42 Q190,-30 198,-12 Q188,-20 178,-14 Z', shade(c, 0.25), 'stroke-width="0"');
+}
+
+function drawBottle() {
+  return shape('M36,336 L58,336 L60,346 L60,390 Q60,394 56,394 L38,394 Q34,394 34,390 L34,346 Z', '#dff3fb') +
+    shape('M35,360 L59,360 L59,390 Q59,393 56,393 L38,393 Q35,393 35,390 Z', COLORS.bottle, 'stroke-width="0"') +
+    `<path d="M36,336 L58,336 L60,346 L60,390 Q60,394 56,394 L38,394 Q34,394 34,390 L34,346 Z" fill="none" stroke="${O}" stroke-width="${SW}" stroke-linejoin="round"/>` +
+    shape('M40,324 L54,324 L54,336 L40,336 Z', '#3fa7a0');
+}
+
+/**
+ * Draw the kid wearing an outfit.
+ * child: { look: 'boy'|'girl', skin, hair, color }
+ * outfit: { shirt, bottom, shoes, layers: [], acc: [] }
+ */
+function drawKid(child, outfit, opts = {}) {
+  const skin = SKINS[child.skin] ?? SKINS[0];
+  const hair = HAIRS[child.hair] ?? HAIRS[0];
+  const shirtColor = child.color || SHIRT_COLORS[0];
+  const layers = outfit.layers || [];
+  const acc = outfit.acc || [];
+  const has = (k) => layers.includes(k) || acc.includes(k);
+  const mood = opts.mood || 'ok';
+
+  let s = '';
+  // ground shadow
+  s += `<ellipse cx="120" cy="394" rx="78" ry="10" fill="#000" opacity="0.08"/>`;
+  if (opts.bottle) s += drawBottle();
+
+  // puffy coat sleeves can't hang straight: splay the arms a little
+  const spread = has('coat') ? 20 : 0;
+  const arms = [[ARM_L[0], ARM_L[1], ARM_L[2] - spread, ARM_L[3]], [ARM_R[0], ARM_R[1], ARM_R[2] + spread, ARM_R[3]]];
+  if (has('umbrella')) s += drawUmbrellaShaft(arms[1][2]);
+  const style = hairStyleOf(child);
+  s += backHair(style, hair);
+
+  // legs + bottoms
+  s += limb(...LEG_L, 24, skin) + limb(...LEG_R, 24, skin);
+  const bc = outfit.bottom === 'shorts' ? COLORS.shorts : COLORS.pants;
+  const shorts = outfit.bottom === 'shorts';
+  const bf = shorts ? 0.38 : 0.94;
+  const bw = shorts ? 36 : 30;
+  s += partial(...LEG_L, bf, bw, bc) + partial(...LEG_R, bf, bw, bc);
+  if (shorts) s += line('M90,304 L122,304 M118,304 L150,304', shade(bc, -0.25), 4);
+  s += shape('M88,252 L152,252 L154,286 Q120,292 86,286 Z', bc);
+  s += line('M120,262 L120,290', shade(bc, -0.2), 3);
+  s += drawShoes(outfit.shoes, skin);
+
+  // arms: skin, then sleeves from inner to outer layer
+  const seg = (arm, f0, f1, w, c) => {
+    const [x1, y1, x2, y2] = arm;
+    return limb(lerp(x1, x2, f0), lerp(y1, y2, f0), lerp(x1, x2, f1), lerp(y1, y2, f1), w, c);
+  };
+  arms.forEach((arm, side) => {
+    s += limb(...arm, 20, skin);
+    s += partial(...arm, outfit.shirt === 'tee' ? 0.3 : 0.86, 21, shirtColor);
+    if (has('sweatshirt')) {
+      s += partial(...arm, 0.8, 28, COLORS.sweatshirt);
+      s += seg(arm, 0.78, 0.88, 31, shade(COLORS.sweatshirt, -0.15)); // ribbed cuff
+    }
+    if (has('coat')) {
+      // stacked round segments → puffy "sausage" sleeve
+      for (const [f0, f1] of [[0, 0.36], [0.3, 0.64], [0.58, 0.9]]) s += seg(arm, f0, f1, 40, COLORS.coat);
+    }
+    const [, , hx, hy] = arm;
+    if (has('gloves')) {
+      const tx = side === 0 ? hx + 12 : hx - 12;
+      s += `<ellipse cx="${tx}" cy="${hy - 2}" rx="7" ry="8" fill="${COLORS.gloves}" stroke="${O}" stroke-width="${SW}"/>`;
+      s += `<ellipse cx="${hx}" cy="${hy + 4}" rx="14" ry="17" fill="${COLORS.gloves}" stroke="${O}" stroke-width="${SW}"/>`;
+      s += shape(`M${hx - 14},${hy - 12} L${hx + 14},${hy - 12} L${hx + 14},${hy - 4} L${hx - 14},${hy - 4} Z`, '#ffffff');
+    } else {
+      s += `<circle cx="${hx}" cy="${hy + 2}" r="11.5" fill="${skin}" stroke="${O}" stroke-width="${SW}"/>`;
+    }
+  });
+
+  // neck + torso layers
+  s += shape('M109,128 L131,128 L131,160 L109,160 Z', skin);
+  s += drawTop(outfit.shirt, shirtColor, child.look);
+  if (!has('sweatshirt') && !has('coat')) s += shape('M106,148 Q120,166 134,148 Z', skin);
+  if (has('sweatshirt')) s += drawSweatshirt(!has('coat'));
+  if (has('coat')) s += drawCoat();
+  if (has('scarf')) s += drawScarf();
+
+  // head
+  // younger kids get a slightly bigger head, older a slightly smaller one
+  const age = child.age || 6;
+  const k = age <= 5 ? 1.1 : age >= 9 ? 0.95 : 1;
+  s += `<g transform="translate(120 128) scale(${k}) translate(-120 -128)">`;
+  s += face(skin, mood);
+  const hat = has('beanie') ? 'beanie' : has('cap') ? 'cap' : null;
+  s += frontHair(style, hair, !!hat, child.look === 'girl');
+  if (hat === 'beanie') s += drawBeanie();
+  if (hat === 'cap') s += drawCap();
+  s += '</g>';
+
+  if (has('umbrella')) s += drawUmbrellaCanopy();
+
+  // leave room above the head only when an umbrella is drawn (opts.tall keeps
+  // all figures of one kid at the same scale)
+  const tall = opts.tall ?? has('umbrella');
+  const vb = tall ? '-10 -66 270 470' : '-10 -6 270 410';
+  return `<svg class="kid-svg${tall ? ' tall' : ''}" viewBox="${vb}" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" role="img">${s}</svg>`;
+}
+
+// ---------- item icons (viewBox 0 0 100 100) ----------
+
+const ICONS = {
+  tee: (c) => shape('M30,22 L42,16 Q50,26 58,16 L70,22 L88,38 L77,50 L68,43 L68,86 L32,86 L32,43 L23,50 L12,38 Z', c) +
+    shape('M50,44 L53,51 L60,51 L54,56 L56,63 L50,59 L44,63 L46,56 L40,51 L47,51 Z', '#fff'),
+  longsleeve: (c) => shape('M32,18 L42,14 Q50,24 58,14 L68,18 L86,66 L75,70 L67,42 L67,88 L33,88 L33,42 L25,70 L14,66 Z', c) +
+    line('M35,50 L65,50 M35,62 L65,62 M35,74 L65,74', shade(c, 0.22), 5) +
+    `<path d="M32,18 L42,14 Q50,24 58,14 L68,18 L86,66 L75,70 L67,42 L67,88 L33,88 L33,42 L25,70 L14,66 Z" fill="none" stroke="${O}" stroke-width="${SW}" stroke-linejoin="round"/>`,
+  sweatshirt: () => shape('M30,26 Q24,2 50,2 Q76,2 70,26 Q50,36 30,26 Z', COLORS.sweatshirt) +
+    shape('M37,23 Q35,9 50,9 Q65,9 63,23 Q50,30 37,23 Z', shade(COLORS.sweatshirt, -0.2)) +
+    shape('M29,18 L42,13 Q50,22 58,13 L71,18 L88,66 L76,70 L69,44 L69,84 L31,84 L31,44 L24,70 L12,66 Z', COLORS.sweatshirt) +
+    shape('M31,82 L69,82 L69,92 L31,92 Z', shade(COLORS.sweatshirt, -0.15)) +
+    shape('M76,68 L88,64 L91,73 L79,77 Z', shade(COLORS.sweatshirt, -0.15)) +
+    shape('M24,68 L12,64 L9,73 L21,77 Z', shade(COLORS.sweatshirt, -0.15)) +
+    shape('M38,58 L62,58 L65,76 L35,76 Z', shade(COLORS.sweatshirt, -0.08)) +
+    line('M45,26 L44,44 M55,26 L56,44', '#ffffff', 3),
+  coat: () => {
+    const c = COLORS.coat;
+    let s = '';
+    for (const [x1, x2] of [[26, 13], [74, 87]]) {
+      s += limb(x1, 24, lerp(x1, x2, 0.5), 50, 17, c) + limb(lerp(x1, x2, 0.45), 46, x2, 76, 17, c);
+    }
+    s += shape('M30,12 Q50,20 70,12 Q84,14 81,28 Q88,38 81,48 Q88,58 81,68 Q88,80 80,92 Q50,100 20,92 Q12,80 19,68 Q12,58 19,48 Q12,38 19,28 Q16,14 30,12 Z', c);
+    for (const y of [40, 60, 79]) s += line(`M19,${y} Q50,${y + 6} 81,${y}`, shade(c, -0.22), 2.5);
+    for (const y of [26, 46, 66]) s += line(`M28,${y} Q50,${y - 4} 72,${y}`, shade(c, 0.28), 3.5, 'opacity="0.7"');
+    s += line('M50,18 L50,96', shade(c, -0.32), 2.5);
+    for (let x = 34; x <= 66; x += 8) s += `<circle cx="${x}" cy="${(12 + 7 * (1 - ((x - 50) / 16) ** 2)).toFixed(1)}" r="6" fill="#f7f3ea" stroke="${O}" stroke-width="2"/>`;
+    return s;
+  },
+  shorts: () => shape('M26,28 L74,28 L79,70 L55,70 L50,48 L45,70 L21,70 Z', COLORS.shorts),
+  pants: () => shape('M30,10 L70,10 L75,92 L56,92 L50,38 L44,92 L25,92 Z', COLORS.pants) +
+    line('M30,20 L70,20', shade(COLORS.pants, -0.2), 3),
+  sneakers: () => shape('M12,62 Q12,40 30,40 L46,40 Q52,52 68,53 Q88,55 90,68 L90,70 L12,70 Z', COLORS.sneakers) +
+    shape('M10,68 L92,68 L92,74 Q92,80 86,80 L16,80 Q10,80 10,74 Z', '#fff') +
+    line('M36,46 L44,52 M32,52 L40,58', '#fff', 3),
+  sandals: () => shape('M10,70 Q10,62 20,62 L82,62 Q92,62 92,70 Q92,78 82,78 L20,78 Q10,78 10,70 Z', COLORS.sandals) +
+    line('M30,62 Q40,40 54,62 M58,62 Q68,46 78,62', shade(COLORS.sandals, -0.15), 6),
+  boots: () => shape('M28,12 L58,12 L58,58 Q82,60 86,74 L86,86 L28,86 Z', COLORS.boots) +
+    shape('M26,84 L88,84 L88,92 L26,92 Z', '#5a4636') + line('M28,24 L58,24', shade(COLORS.boots, -0.15), 4) +
+    line('M37,32 L37,70', '#fff8d6', 5, 'opacity="0.8"'),
+  umbrella: () => line('M50,22 L50,80 Q50,90 40,88', O, 6) + line('M50,22 L50,80 Q50,90 40,88', '#8a6a4f', 3) +
+    shape('M8,52 Q50,-6 92,52 Q81,44 71,52 Q60,44 50,52 Q40,44 29,52 Q19,44 8,52 Z', COLORS.umbrella),
+  beanie: () => shape('M18,70 Q16,20 50,18 Q84,20 82,70 Z', COLORS.beanie) +
+    shape('M14,64 L86,64 L86,80 L14,80 Z', shade(COLORS.beanie, -0.12)) +
+    `<circle cx="50" cy="16" r="10" fill="#fff" stroke="${O}" stroke-width="${SW}"/>`,
+  gloves: () => shape('M22,88 L22,44 Q22,28 38,28 Q54,28 54,44 L54,88 Z', COLORS.gloves) +
+    shape('M54,56 Q66,46 70,56 Q72,64 56,72 Z', COLORS.gloves) +
+    shape('M20,80 L56,80 L56,92 L20,92 Z', '#fff'),
+  scarf: () => shape('M14,30 Q50,46 86,30 L88,46 Q50,62 12,46 Z', COLORS.scarf) +
+    shape('M58,50 L68,90 L54,92 L46,54 Z', COLORS.scarf) +
+    line('M24,38 L24,50 M40,42 L40,54 M60,42 L60,54 M76,38 L76,50', '#fff', 3) +
+    line('M56,93 L55,99 M61,92 L61,99 M66,91 L67,98', COLORS.scarf, 3),
+  cap: () => shape('M56,56 Q90,52 97,64 Q88,74 56,68 Z', shade(COLORS.cap, -0.12)) +
+    shape('M10,64 Q12,22 44,20 Q76,22 78,64 Q44,58 10,64 Z', COLORS.cap) +
+    `<circle cx="44" cy="20" r="4" fill="${shade(COLORS.cap, -0.2)}" stroke="${O}" stroke-width="2"/>`,
+  bottle: () => shape('M38,24 L62,24 L66,36 L66,88 Q66,92 62,92 L38,92 Q34,92 34,88 L34,36 Z', '#dff3fb') +
+    shape('M35,54 L65,54 L65,88 Q65,91 62,91 L38,91 Q35,91 35,88 Z', COLORS.bottle, 'stroke-width="0"') +
+    `<path d="M38,24 L62,24 L66,36 L66,88 Q66,92 62,92 L38,92 Q34,92 34,88 L34,36 Z" fill="none" stroke="${O}" stroke-width="${SW}" stroke-linejoin="round"/>` +
+    shape('M40,10 L60,10 L60,24 L40,24 Z', '#3fa7a0'),
+  sunscreen: () => shape('M30,30 L70,30 L64,90 L36,90 Z', COLORS.sunscreen) +
+    shape('M40,14 L60,14 L60,30 L40,30 Z', '#e5534b') +
+    `<circle cx="50" cy="58" r="10" fill="#ff9f1c" stroke="${O}" stroke-width="2"/>` +
+    line('M50,42 L50,46 M50,70 L50,74 M34,58 L38,58 M62,58 L66,58', '#ff9f1c', 3),
+  backpack: () => line('M36,30 Q36,12 50,12 Q64,12 64,30', O, 5) +
+    shape('M24,36 Q24,26 34,26 L66,26 Q76,26 76,36 L76,86 Q76,92 70,92 L30,92 Q24,92 24,86 Z', COLORS.backpack) +
+    shape('M34,58 L66,58 L66,80 L34,80 Z', shade(COLORS.backpack, -0.1)) +
+    line('M24,46 L76,46', shade(COLORS.backpack, -0.2), 3),
+};
+
+function itemIcon(name, color) {
+  const fn = ICONS[name];
+  if (!fn) return '';
+  return `<svg class="item-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${fn(color || SHIRT_COLORS[0])}</svg>`;
+}
+
+// ---------- weather icons (viewBox 0 0 100 100) ----------
+
+const sun = (cx, cy, r) => {
+  let rays = '';
+  for (let i = 0; i < 8; i++) {
+    const a = (i * Math.PI) / 4;
+    rays += `M${cx + Math.cos(a) * (r + 6)},${cy + Math.sin(a) * (r + 6)} L${cx + Math.cos(a) * (r + 14)},${cy + Math.sin(a) * (r + 14)} `;
+  }
+  return line(rays, '#f7a928', 5) + `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#ffd23f" stroke="#f7a928" stroke-width="3"/>`;
+};
+const moon = (cx, cy) => `<path d="M${cx + 6},${cy - 24} A24,24 0 1,0 ${cx + 22},${cy + 14} A19,19 0 1,1 ${cx + 6},${cy - 24} Z" fill="#ffe8a3" stroke="#e0b94f" stroke-width="3"/>`;
+const cloud = (dx = 0, dy = 0, fill = '#ffffff', stroke = '#8aa0b8') =>
+  `<path transform="translate(${dx},${dy})" d="M28,72 Q12,72 12,58 Q12,44 28,44 Q30,28 48,28 Q62,28 68,40 Q88,38 90,56 Q90,72 74,72 Z" fill="${fill}" stroke="${stroke}" stroke-width="3.5" stroke-linejoin="round"/>`;
+const drops = (n) => {
+  let d = '';
+  const xs = n === 2 ? [38, 62] : [30, 50, 70];
+  for (const x of xs) d += `M${x},78 L${x - 5},92 `;
+  return line(d, '#3d8fe0', 5);
+};
+
+function weatherIcon(kind, night = false) {
+  let s = '';
+  switch (kind) {
+    case 'clear': s = night ? moon(44, 50) : sun(50, 50, 20); break;
+    case 'partly': s = (night ? moon(38, 36) : sun(38, 36, 16)) + cloud(8, 12); break;
+    case 'cloudy': s = cloud(-8, -6, '#eef2f7') + cloud(6, 6); break;
+    case 'fog': s = cloud(0, -8, '#eef2f7') + line('M18,78 L82,78 M26,90 L74,90', '#9aa9b9', 5); break;
+    case 'drizzle': s = cloud(0, -10) + drops(2); break;
+    case 'rain': s = cloud(0, -10, '#dfe7f0', '#6f86a0') + drops(3); break;
+    case 'storm': s = cloud(0, -12, '#c9d3df', '#5c6f86') + `<path d="M52,58 L40,78 L52,78 L44,96 L64,70 L52,70 L60,58 Z" fill="#ffd23f" stroke="#e0a21f" stroke-width="2.5" stroke-linejoin="round"/>`; break;
+    case 'snow': s = cloud(0, -10) + `<g fill="#9fc9ef"><circle cx="32" cy="84" r="5"/><circle cx="50" cy="92" r="5"/><circle cx="68" cy="84" r="5"/></g>`; break;
+    case 'wind': s = line('M14,38 L60,38 Q74,38 74,28 Q74,18 64,20 M14,54 L78,54 Q90,54 90,64 Q90,74 80,72 M14,70 L52,70', '#7d93ab', 6); break;
+    default: s = cloud();
+  }
+  return `<svg class="wx-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+}
+
+// A little sky arc with the sun placed by hour (right = morning, for RTL reading).
+function skyClock(hour) {
+  const t = Math.max(0, Math.min(1, (hour - 6) / 12));
+  const a = Math.PI * t; // 0 at right, PI at left
+  const cx = 50 + Math.cos(a) * 36, cy = 70 - Math.sin(a) * 40;
+  return `<svg class="sky-svg" viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">` +
+    line('M10,70 Q10,22 50,22 Q90,22 90,70', '#c9b89a', 3, 'stroke-dasharray="4 7"') +
+    line('M4,72 L96,72', '#a9d18e', 5) +
+    `<circle cx="${cx}" cy="${cy}" r="11" fill="#ffd23f" stroke="#f7a928" stroke-width="3"/></svg>`;
+}
+
+function arrowIcon() {
+  return `<svg class="arrow-svg" viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">` +
+    `<path d="M112,30 Q70,6 28,26" fill="none" stroke="#c9a77c" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 13"/>` +
+    `<path d="M36,12 L14,30 L40,40 Z" fill="#c9a77c" stroke="#c9a77c" stroke-width="4" stroke-linejoin="round"/></svg>`;
+}
+
+// Turns an hourly forecast for the hours the kid is out into an outfit plan.
+// All temperatures are "feels like" (apparent) temperatures (an optional offset
+// shifts them: positive = runs warm).
+//
+// The rules are a small table the parent can edit in settings: six feel levels
+// (freezing … very hot), each with an upper bound and what to wear in it.
+
+const LEVEL_NAMES = ['קפוא', 'קר מאוד', 'קר', 'קריר', 'נעים', 'חם', 'חם מאוד'];
+
+// Defaults tuned for Israel. People here are comfortable at about 20–25°C
+// (a Tel Aviv outdoor-comfort study), so under ~19° already feels cold and the
+// puffer coat starts at 14°; beanie, scarf and gloves only below 10°.
+// Bump RULES_VERSION when the defaults change so browsers holding the old
+// defaults pick up the new ones.
+const RULES_VERSION = 3;
+const lvl = (max, shirt, bottom, shoes, extra = {}) => ({
+  max, shirt, bottom, shoes, sweatshirt: false, coat: false, winter: false, cap: false, ...extra,
+});
+const defaultRules = () => ({
+  v: RULES_VERSION,
+  levels: [
+    lvl(10, 'long', 'pants', 'sneakers', { sweatshirt: true, coat: true, winter: true }), // freezing
+    lvl(14, 'long', 'pants', 'sneakers', { sweatshirt: true, coat: true }), // very cold
+    lvl(19, 'long', 'pants', 'sneakers', { sweatshirt: true }), // cold
+    lvl(23, 'long', 'pants', 'sneakers'), // cool: a thin long-sleeve shirt
+    lvl(26, 'tee', 'shorts', 'sneakers'), // pleasant
+    lvl(29, 'tee', 'shorts', 'sneakers', { cap: true }), // warm
+    lvl(null, 'tee', 'shorts', 'sandals', { cap: true }), // hot
+  ],
+  rain: { chance: 50, bootsMm: 6 },
+});
+
+// Make a stored rules object safe to use (missing fields fall back to defaults).
+function normalizeRules(r) {
+  const d = defaultRules();
+  if (!r || r.v !== d.v || !Array.isArray(r.levels) || r.levels.length !== d.levels.length) return d;
+  const levels = r.levels.map((l, i) => ({ ...d.levels[i], ...l }));
+  levels[levels.length - 1].max = null;
+  // bounds must go up
+  for (let i = 1; i < levels.length - 1; i++) {
+    if (!(levels[i].max > levels[i - 1].max)) levels[i].max = levels[i - 1].max + 1;
+  }
+  return { v: d.v, levels, rain: { ...d.rain, ...(r.rain || {}) } };
+}
+
+function levelIndex(t, rules) {
+  const i = rules.levels.findIndex((l) => l.max == null || t < l.max);
+  return i < 0 ? rules.levels.length - 1 : i;
+}
+
+const isRainy = (h, rules) => h.pop >= rules.rain.chance || h.precip >= 0.3;
+
+// Split hours into up to three consecutive phases (morning / midday / afternoon).
+function phasesOf(hours) {
+  const n = hours.length;
+  if (n <= 3) return [hours];
+  const a = Math.round(n / 3), b = Math.round((2 * n) / 3);
+  return [hours.slice(0, a), hours.slice(a, b), hours.slice(b)];
+}
+
+const ORDER = ['sweatshirt', 'coat', 'scarf', 'beanie', 'gloves', 'umbrella', 'cap'];
+const sortItems = (arr) => [...new Set(arr)].sort((x, y) => ORDER.indexOf(x) - ORDER.indexOf(y));
+
+function planOutfit(hours, offset = 0, rules = defaultRules()) {
+  if (!hours.length) return null;
+  const L = (t) => rules.levels[levelIndex(t, rules)];
+  const rainy = (h) => isRainy(h, rules);
+  const f = (h) => h.feels + offset;
+  const feels = hours.map(f);
+  const peak = Math.max(...feels);
+  const low = Math.min(...feels);
+  const P = L(peak), C = L(low);
+  const anyRain = hours.some(rainy);
+  const totalMm = hours.reduce((s, h) => s + (h.precip || 0), 0);
+
+  // base clothes are worn all day: chosen by the warmest hour, but shorts and
+  // sandals only if the coldest hour doesn't call for a warm layer
+  const coldPart = C.sweatshirt || C.coat;
+  const shirt = P.shirt === 'tee' ? 'tee' : 'longsleeve';
+  const bottom = P.bottom === 'shorts' && !coldPart ? 'shorts' : 'pants';
+  const shoes = totalMm >= rules.rain.bootsMm ? 'boots'
+    : P.shoes === 'sandals' && !anyRain && C.bottom === 'shorts' ? 'sandals' : 'sneakers';
+
+  const raw = phasesOf(hours).map((ph) => {
+    const pf = ph.map(f);
+    const t = Math.min(...pf), tMax = Math.max(...pf);
+    const lv = L(t), hot = L(tMax);
+    const layers = [], acc = [];
+    // a sweatshirt when this level asks for one, or when it asks for long
+    // sleeves but the kid is in a short-sleeve shirt
+    if (lv.sweatshirt || (lv.shirt === 'long' && shirt === 'tee')) layers.push('sweatshirt');
+    if (lv.coat) layers.push('coat');
+    if (lv.winter) acc.push('scarf', 'beanie', 'gloves');
+    const wet = ph.some(rainy);
+    if (wet) acc.push('umbrella');
+    if (!wet && hot.cap) acc.push('cap');
+    return { from: ph[0].hour, to: ph[ph.length - 1].hour, tMin: t, tMax, layers, acc, hours: ph, cold: lv.winter };
+  });
+
+  // a sun cap is worn all day if it's needed at any point (not a reason to change)
+  if (raw.some((p) => p.acc.includes('cap'))) {
+    for (const p of raw) if (!p.acc.includes('umbrella') && !p.acc.includes('cap')) p.acc.push('cap');
+  }
+
+  // merge neighbouring phases that need the same clothes
+  const segments = [];
+  for (const p of raw) {
+    const prev = segments[segments.length - 1];
+    if (prev && sameWear(prev, p)) {
+      prev.to = p.to;
+      prev.tMin = Math.min(prev.tMin, p.tMin);
+      prev.tMax = Math.max(prev.tMax, p.tMax);
+      prev.hours = prev.hours.concat(p.hours);
+    } else {
+      segments.push({ ...p });
+    }
+  }
+  const hottest = rules.levels.length - 1;
+  for (const s of segments) {
+    s.shirt = shirt; s.bottom = bottom; s.shoes = shoes;
+    s.mood = s.cold ? 'cold' : levelIndex(s.tMax, rules) === hottest ? 'hot' : 'ok';
+  }
+
+  // what to wear when leaving, and what goes in the bag for later in the day
+  const morning = segments[0];
+  const wornAtStart = new Set([...morning.layers, ...morning.acc]);
+  const bag = sortItems(segments.slice(1).flatMap((s) => [...s.layers, ...s.acc]).filter((id) => !wornAtStart.has(id)));
+
+  return { peak, low, morning, bag, phases: raw };
+}
+
+function sameWear(a, b) {
+  return a.layers.join() === b.layers.join() && a.acc.join() === b.acc.join();
+}
+
+// Location + forecast (Open-Meteo, free, no API key) with an offline cache,
+// plus synthetic demo days for trying the app without network.
+
+const TEL_AVIV = { name: 'תל אביב', lat: 32.0853, lon: 34.7818 };
+
+const CACHE_KEY = 'mc.forecast';
+const POS_KEY = 'mc.lastPosition';
+
+function getPosition(timeoutMs = 10000) {
+  return new Promise((resolve) => {
+    if (!('geolocation' in navigator)) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({ lat: p.coords.latitude, lon: p.coords.longitude }),
+      () => resolve(null),
+      { timeout: timeoutMs, maximumAge: 6 * 3600 * 1000 },
+    );
+  });
+}
+
+// Resolve where we are: manual choice, detected position, last known, or Tel Aviv.
+async function resolveLocation(loc) {
+  if (loc?.mode === 'manual' && loc.lat != null) return { ...loc, source: 'manual' };
+  const pos = await getPosition();
+  if (pos) {
+    const last = readJSON(POS_KEY);
+    let name = last && near(last, pos) ? last.name : null;
+    if (!name) name = await reverseName(pos).catch(() => null);
+    const res = { ...pos, name: name || '', source: 'auto' };
+    writeJSON(POS_KEY, res);
+    return res;
+  }
+  const last = readJSON(POS_KEY);
+  if (last) return { ...last, source: 'last' };
+  return { ...TEL_AVIV, source: 'default' };
+}
+
+const near = (a, b) => Math.abs(a.lat - b.lat) < 0.05 && Math.abs(a.lon - b.lon) < 0.05;
+
+async function reverseName({ lat, lon }) {
+  const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=he`);
+  if (!r.ok) return null;
+  const j = await r.json();
+  return j.city || j.locality || null;
+}
+
+async function searchCity(q) {
+  const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=he&format=json`);
+  if (!r.ok) throw new Error('search failed');
+  const j = await r.json();
+  return (j.results || []).map((x) => ({
+    name: x.name,
+    detail: [x.admin1, x.country].filter(Boolean).join(', '),
+    lat: x.latitude,
+    lon: x.longitude,
+  }));
+}
+
+const HOURLY = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,uv_index,is_day';
+
+async function fetchForecast({ lat, lon }) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&hourly=${HOURLY}&timezone=auto&forecast_days=3`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const days = parse(await r.json());
+    writeJSON(CACHE_KEY, { lat, lon, at: Date.now(), days });
+    return { days, at: Date.now(), stale: false };
+  } catch (e) {
+    const c = readJSON(CACHE_KEY);
+    if (c && near(c, { lat, lon })) return { days: c.days, at: c.at, stale: true };
+    throw e;
+  }
+}
+
+// → { 'YYYY-MM-DD': [ {hour, temp, feels, pop, precip, code, wind, uv, day} ] }
+function parse(j) {
+  const h = j.hourly, out = {};
+  h.time.forEach((t, i) => {
+    const [date, hm] = t.split('T');
+    (out[date] ||= []).push({
+      hour: parseInt(hm, 10),
+      temp: h.temperature_2m[i],
+      feels: h.apparent_temperature[i] ?? h.temperature_2m[i],
+      pop: h.precipitation_probability[i] ?? 0,
+      precip: h.precipitation[i] ?? 0,
+      code: h.weather_code[i] ?? 0,
+      wind: h.wind_speed_10m[i] ?? 0,
+      uv: h.uv_index[i] ?? 0,
+      day: h.is_day[i] ?? 1,
+    });
+  });
+  return out;
+}
+
+function dateKey(d) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+// WMO weather code (+wind) → icon name
+function iconKind(h) {
+  const c = h.code;
+  if (c >= 95) return 'storm';
+  if ((c >= 71 && c <= 77) || c === 85 || c === 86) return 'snow';
+  if ((c >= 61 && c <= 67) || (c >= 80 && c <= 82)) return 'rain';
+  if (c >= 51 && c <= 57) return 'drizzle';
+  if (c === 45 || c === 48) return 'fog';
+  if (h.wind >= 35) return 'wind';
+  if (c === 3) return 'cloudy';
+  if (c === 1 || c === 2) return 'partly';
+  return 'clear';
+}
+
+// ---------- demo days ----------
+// Each scenario: hourly feels-like curve (index = hour) + rain/codes.
+const DEMOS = {
+  hot: { lo: 25, hi: 33, code: 0, uv: 9 },
+  warm: { lo: 19, hi: 26, code: 1, uv: 7 },
+  layers: { lo: 9, hi: 22, code: 1, uv: 5 },
+  mild: { lo: 16, hi: 21, code: 2, uv: 4 },
+  cool: { lo: 11, hi: 16, code: 3, uv: 2 },
+  rain: { lo: 10, hi: 14, code: 63, pop: 90, precip: 3, uv: 1 },
+  pmrain: { lo: 13, hi: 19, code: 2, uv: 3, rainFrom: 14 },
+  cold: { lo: 2, hi: 9, code: 3, uv: 1 },
+};
+const DEMO_NAMES = Object.keys(DEMOS);
+
+// rain: optional override – 'none' | 'pm' (from 14:00) | 'all'
+function demoDay(name, rain) {
+  const d = { ...(DEMOS[name] || DEMOS.layers) };
+  if (rain === 'none') { delete d.pop; delete d.rainFrom; if (d.code >= 51) d.code = 3; }
+  if (rain === 'pm') { delete d.pop; d.rainFrom = 14; if (d.code >= 51) d.code = 2; }
+  if (rain === 'all') { delete d.rainFrom; d.pop = 90; d.precip = 3; d.code = 63; }
+  const hours = [];
+  for (let hour = 0; hour < 24; hour++) {
+    // coldest ~6:00, warmest ~14:00
+    const x = Math.cos(((hour - 14) / 24) * 2 * Math.PI);
+    const k = hour >= 6 && hour <= 14 ? (1 - Math.cos(((hour - 6) / 8) * Math.PI)) / 2 : (x + 1) / 2;
+    const feels = Math.round((d.lo + (d.hi - d.lo) * k) * 10) / 10;
+    const raining = d.pop || (d.rainFrom && hour >= d.rainFrom);
+    hours.push({
+      hour, temp: feels, feels,
+      pop: raining ? (d.pop || 80) : 5,
+      precip: raining ? (d.precip || 1) : 0,
+      code: raining ? (d.rainFrom ? 61 : d.code) : d.code,
+      wind: 10,
+      uv: hour >= 9 && hour <= 15 ? d.uv : 1,
+      day: hour >= 6 && hour < 18 ? 1 : 0,
+    });
+  }
+  return hours;
+}
+
+function readJSON(k) {
+  try { return JSON.parse(localStorage.getItem(k)); } catch { return null; }
+}
+function writeJSON(k, v) {
+  try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ignore */ }
+}
+
+
+const KEY = 'mc.demo.settings';
+
+const MAX_KIDS = 3;
+
+const newKid = (i = 0) => ({
+  id: Math.random().toString(36).slice(2, 9),
+  name: '',
+  age: 5,
+  look: i % 2 ? 'girl' : 'boy',
+  hairStyle: i % 2 ? 'long' : 'short',
+  skin: 0,
+  hair: i % 2 ? 2 : 1,
+  color: SHIRT_COLORS[i % SHIRT_COLORS.length],
+});
+
+const defaults = () => ({
+  location: { mode: 'auto', ...TEL_AVIV },
+  leaveHour: 8,
+  returnHour: 17,
+  switchHour: 17, // from this hour on, show tomorrow
+  nightStart: 21,
+  nightEnd: 6,
+  kids: [newKid(0)], // the welcome screen asks for the real names on first load
+  rules: defaultRules(),
+  configured: false,
+});
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && Array.isArray(s.kids)) return { ...defaults(), ...s, rules: normalizeRules(s.rules) };
+  } catch { /* ignore */ }
+  return defaults();
+}
+
+function save(s) {
+  try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* ignore */ }
+}
+
+// Words and numbers are shown for every kid (a parent or older sibling can read
+// them; the pictures carry the meaning for kids who can't read yet).
+const isReader = () => true;
+
+
+const hourOpts = (sel, from, to) => {
+  let s = '';
+  for (let h = from; h <= to; h++) s += `<option value="${h}"${h === sel ? ' selected' : ''}>${String(h).padStart(2, '0')}:00</option>`;
+  return s;
+};
+const escS = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const PREVIEW = { shirt: 'tee', bottom: 'pants', shoes: 'sneakers', layers: [], acc: [] };
+
+function openSettings(current, onSave) {
+  const s = structuredClone(current);
+  s.rules = normalizeRules(s.rules);
+  const dlg = document.createElement('div');
+  dlg.className = 'settings';
+  document.body.appendChild(dlg);
+
+  const close = () => dlg.remove();
+
+  function kidHtml(k, i) {
+    const swatches = (arr, sel, field) => arr.map((c, j) =>
+      `<button type="button" class="sw${(field === 'color' ? c === sel : j === sel) ? ' on' : ''}" style="background:${c}" data-k="${i}" data-f="${field}" data-v="${field === 'color' ? c : j}"></button>`).join('');
+    return `<div class="kid-edit">
+      <div class="kid-prev">${drawKid(k, PREVIEW)}</div>
+      <div class="kid-fields">
+        <label>שם <input data-k="${i}" data-f="name" value="${escS(k.name)}" placeholder="לא חובה"></label>
+        <label>גיל <input type="number" min="2" max="14" data-k="${i}" data-f="age" value="${k.age}"></label>
+        <div class="row">
+          <button type="button" class="pill${k.look === 'boy' ? ' on' : ''}" data-k="${i}" data-f="look" data-v="boy">ילד</button>
+          <button type="button" class="pill${k.look === 'girl' ? ' on' : ''}" data-k="${i}" data-f="look" data-v="girl">ילדה</button>
+        </div>
+        <div class="row"><span>תסרוקת</span>${[['short', 'קצר'], ['curly', 'תלתלים'], ['long', 'ארוך']].map(([v, t]) =>
+          `<button type="button" class="pill${hairStyleOf(k) === v ? ' on' : ''}" data-k="${i}" data-f="hairStyle" data-v="${v}">${t}</button>`).join('')}</div>
+        <div class="row"><span>עור</span>${swatches(SKINS, k.skin, 'skin')}</div>
+        <div class="row"><span>שיער</span>${swatches(HAIRS, k.hair, 'hair')}</div>
+        <div class="row"><span>חולצה</span>${swatches(SHIRT_COLORS, k.color, 'color')}</div>
+        ${s.kids.length > 1 ? `<button type="button" class="remove" data-remove="${i}">הסרה</button>` : ''}
+      </div></div>`;
+  }
+
+  // the editable "temperatures and clothes" table
+  function rulesHtml() {
+    const R = s.rules, last = R.levels.length - 1;
+    const sel = (i, f, opts, v) => `<select data-lv="${i}" data-lf="${f}">${opts.map(([o, t]) => `<option value="${o}"${o === v ? ' selected' : ''}>${t}</option>`).join('')}</select>`;
+    const chk = (i, f, v) => `<input type="checkbox" data-lv="${i}" data-lf="${f}"${v ? ' checked' : ''}>`;
+    const head = (icon, t) => `<th><span class="th-ic">${itemIcon(icon, '#7ec8e3')}</span>${t}</th>`;
+    const rows = R.levels.map((l, i) => {
+      const lo = i === 0 ? null : R.levels[i - 1].max;
+      const range = i === last
+        ? `מ־<bdi dir="ltr">${lo}°</bdi>`
+        : `${i === 0 ? 'מתחת ל־' : `<bdi dir="ltr">${lo}°</bdi> עד`} <input type="number" data-lv="${i}" data-lf="max" value="${l.max}">°`;
+      return `<tr><th class="lvl">${LEVEL_NAMES[i]}</th><td class="rng">${range}</td>` +
+        `<td>${sel(i, 'shirt', [['long', 'ארוכה'], ['tee', 'קצרה']], l.shirt)}</td>` +
+        `<td>${sel(i, 'bottom', [['pants', 'ארוך'], ['shorts', 'קצר']], l.bottom)}</td>` +
+        `<td>${sel(i, 'shoes', [['sneakers', 'נעליים'], ['sandals', 'סנדלים']], l.shoes)}</td>` +
+        `<td>${chk(i, 'sweatshirt', l.sweatshirt)}</td><td>${chk(i, 'coat', l.coat)}</td><td>${chk(i, 'winter', l.winter)}</td>` +
+        `<td>${chk(i, 'cap', l.cap)}</td></tr>`;
+    }).join('');
+    return `<fieldset><legend>טמפרטורות ובגדים</legend>
+      <div class="hint">לפי הטמפרטורה המורגשת. אפשר לשנות את הגבולות ואת מה לובשים בכל טווח.</div>
+      <div class="rules-wrap"><table class="rules">
+        <thead><tr><th>תחושה</th><th>טמפ׳</th>${head('tee', 'חולצה')}${head('pants', 'מכנס')}${head('sneakers', 'נעליים')}${head('sweatshirt', 'סווטשירט')}${head('coat', 'מעיל')}${head('beanie', 'כובע צמר, צעיף, כפפות')}${head('cap', 'כובע שמש')}</tr></thead>
+        <tbody>${rows}</tbody></table></div>
+      <div class="hint">חולצה, מכנס ונעליים נבחרים לפי השעה החמה ביום. סווטשירט, מעיל ובגדי חורף – לפי כל חלק ביום (מה שצריך רק אחר כך נכנס לתיק). מכנס קצר וסנדלים רק אם גם השעה הקרה לא דורשת סווטשירט.</div>
+      <label>מטריה כשסיכוי הגשם לפחות <span><input type="number" min="0" max="100" data-rain="chance" value="${R.rain.chance}"> %</span></label>
+      <label>מגפיים כשצפוי לפחות <span><input type="number" min="0" step="0.5" data-rain="bootsMm" value="${R.rain.bootsMm}"> מ״מ גשם ביום</span></label>
+      <button type="button" class="reset-rules">החזרת ברירת המחדל</button>
+    </fieldset>`;
+  }
+
+  function draw() {
+    const L = s.location;
+    dlg.innerHTML = `<form class="panel">
+      <h2>הגדרות</h2>
+      <fieldset><legend>מיקום</legend>
+        <div class="row">
+          <button type="button" class="pill${L.mode === 'auto' ? ' on' : ''}" data-loc="auto">זיהוי אוטומטי</button>
+          <button type="button" class="pill${L.mode === 'manual' ? ' on' : ''}" data-loc="manual">בחירת עיר</button>
+        </div>
+        ${L.mode === 'auto'
+          ? `<div class="hint">אם הזיהוי לא יעבוד – ${escS(TEL_AVIV.name)}</div>`
+          : `<div class="hint">נבחר: <b>${escS(L.name)}</b></div>
+             <div class="row"><input id="cityq" placeholder="חיפוש עיר…"><button type="button" id="citygo">חיפוש</button></div>
+             <div id="cityres"></div>`}
+      </fieldset>
+      <fieldset><legend>שעות</legend>
+        <label>יוצאים מהבית <select data-f="leaveHour">${hourOpts(s.leaveHour, 5, 12)}</select></label>
+        <label>חוזרים הביתה <select data-f="returnHour">${hourOpts(s.returnHour, 10, 20)}</select></label>
+        <label>מאיזו שעה להציג את מחר <select data-f="switchHour">${hourOpts(s.switchHour, 12, 23)}</select></label>
+        <label>מסך כהה בלילה, מ־ <select data-f="nightStart">${hourOpts(s.nightStart, 18, 23)}</select></label>
+        <label>עד <select data-f="nightEnd">${hourOpts(s.nightEnd, 3, 8)}</select></label>
+      </fieldset>
+      <fieldset><legend>ילדים</legend>
+        ${s.kids.map(kidHtml).join('')}
+        ${s.kids.length < MAX_KIDS ? '<button type="button" class="add">+ הוספת ילד/ה</button>' : ''}
+      </fieldset>
+      ${rulesHtml()}
+      <div class="actions"><button type="submit" class="save">שמירה</button><button type="button" class="cancel">ביטול</button></div>
+    </form>`;
+  }
+
+  dlg.addEventListener('click', async (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.classList.contains('cancel')) return close();
+    if (b.classList.contains('reset-rules')) { s.rules = defaultRules(); return draw(); }
+    if (b.classList.contains('add')) { s.kids.push(newKid(s.kids.length)); return draw(); }
+    if (b.dataset.remove != null) { s.kids.splice(+b.dataset.remove, 1); return draw(); }
+    if (b.dataset.loc) {
+      s.location = b.dataset.loc === 'auto' ? { ...s.location, mode: 'auto' } : { ...s.location, mode: 'manual' };
+      return draw();
+    }
+    if (b.id === 'citygo') return doSearch();
+    if (b.dataset.city) {
+      const c = JSON.parse(b.dataset.city);
+      s.location = { mode: 'manual', name: c.name, lat: c.lat, lon: c.lon };
+      return draw();
+    }
+    if (b.dataset.k != null && b.dataset.f) {
+      const k = s.kids[+b.dataset.k], f = b.dataset.f;
+      k[f] = f === 'skin' || f === 'hair' ? +b.dataset.v : b.dataset.v;
+      draw();
+    }
+  });
+
+  dlg.addEventListener('change', (e) => {
+    const el = e.target;
+    if (el.dataset.lv != null) {
+      const lvl = s.rules.levels[+el.dataset.lv], lf = el.dataset.lf;
+      lvl[lf] = el.type === 'checkbox' ? el.checked : lf === 'max' ? Number(el.value) : el.value;
+      if (lf === 'max') { // the next row's range label follows
+        const next = dlg.querySelectorAll('.rules td.rng bdi')[+el.dataset.lv];
+        if (next) next.textContent = `${lvl.max}°`;
+      }
+      return;
+    }
+    if (el.dataset.rain) { s.rules.rain[el.dataset.rain] = Number(el.value); return; }
+    const f = el.dataset.f;
+    if (!f) return;
+    if (el.dataset.k != null) {
+      const k = s.kids[+el.dataset.k];
+      k[f] = f === 'name' ? el.value.trim() : Number(el.value);
+      if (f === 'age') { // refresh this kid's preview only (see openWelcome)
+        const prev = dlg.querySelectorAll('.kid-edit .kid-prev')[+el.dataset.k];
+        if (prev) prev.innerHTML = drawKid(k, PREVIEW);
+      }
+    } else {
+      s[f] = Number(el.value);
+    }
+  });
+
+  dlg.addEventListener('keydown', (e) => {
+    if (e.target.id === 'cityq' && e.key === 'Enter') { e.preventDefault(); doSearch(); }
+  });
+
+  dlg.addEventListener('submit', (e) => {
+    e.preventDefault();
+    dlg.querySelectorAll('input[data-f="name"]').forEach((el) => { s.kids[+el.dataset.k].name = el.value.trim(); });
+    if (s.returnHour <= s.leaveHour) s.returnHour = s.leaveHour + 1;
+    s.rules = normalizeRules(s.rules);
+    close();
+    onSave(s);
+  });
+
+  async function doSearch() {
+    const q = dlg.querySelector('#cityq').value.trim();
+    const out = dlg.querySelector('#cityres');
+    if (!q) return;
+    out.textContent = '…';
+    try {
+      const res = await searchCity(q);
+      out.innerHTML = res.length
+        ? res.map((c) => `<button type="button" class="city" data-city='${escS(JSON.stringify(c))}'>${escS(c.name)} <small>${escS(c.detail)}</small></button>`).join('')
+        : 'לא נמצא';
+    } catch {
+      out.textContent = 'אין חיבור לאינטרנט';
+    }
+  }
+
+  draw();
+}
+
+// First load: a short, friendly screen that asks who the kids are.
+function openWelcome(current, onDone) {
+  const kids = structuredClone(current.kids && current.kids.length ? current.kids : [newKid(0)]);
+  const dlg = document.createElement('div');
+  dlg.className = 'settings welcome';
+  document.body.appendChild(dlg);
+
+  const row = (k, i) => `<div class="w-kid">
+      <div class="kid-prev">${drawKid(k, PREVIEW)}</div>
+      <div class="w-fields">
+        <input id="w-name-${i}" data-i="${i}" data-f="name" value="${escS(k.name)}" placeholder="שם" aria-label="שם הילד/ה" autocomplete="off">
+        <label class="w-age">גיל <input id="w-age-${i}" type="number" min="2" max="14" data-i="${i}" data-f="age" value="${k.age}"></label>
+        <div class="row">
+          <button type="button" class="pill${k.look === 'boy' ? ' on' : ''}" data-i="${i}" data-look="boy">ילד</button>
+          <button type="button" class="pill${k.look === 'girl' ? ' on' : ''}" data-i="${i}" data-look="girl">ילדה</button>
+          ${kids.length > 1 ? `<button type="button" class="remove" data-del="${i}" aria-label="הסרה">✕</button>` : ''}
+        </div>
+      </div></div>`;
+
+  function draw() {
+    dlg.innerHTML = `<form class="panel">
+      <h2>בוקר טוב! מי הילדים?</h2>
+      <div class="hint">כל בוקר נראה להם מה ללבוש לפי מזג האוויר. אפשר לשנות הכול אחר כך בלחיצה ארוכה על ⚙.</div>
+      <div class="w-list">${kids.map(row).join('')}</div>
+      ${kids.length < MAX_KIDS ? '<button type="button" class="add">+ עוד ילד/ה</button>' : ''}
+      <div class="actions"><button type="submit" class="save">יאללה, מתחילים</button></div>
+    </form>`;
+  }
+  const sync = () => dlg.querySelectorAll('input[data-f]').forEach((el) => {
+    const k = kids[+el.dataset.i];
+    if (el.dataset.f === 'name') k.name = el.value.trim();
+    else k.age = Math.max(2, Math.min(14, Number(el.value) || k.age));
+  });
+
+  dlg.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    sync();
+    if (b.classList.contains('add')) { kids.push(newKid(kids.length)); draw(); dlg.querySelector(`#w-name-${kids.length - 1}`)?.focus(); return; }
+    if (b.dataset.del != null) { kids.splice(+b.dataset.del, 1); return draw(); }
+    if (b.dataset.look) {
+      const k = kids[+b.dataset.i];
+      k.look = b.dataset.look;
+      k.hairStyle = k.look === 'girl' ? 'long' : 'short';
+      draw();
+    }
+  });
+  // update just this kid's preview (a full redraw here would swallow a click
+  // on a button pressed right after typing the age)
+  dlg.addEventListener('change', (e) => {
+    if (e.target.dataset.f !== 'age') return;
+    sync();
+    const i = +e.target.dataset.i;
+    const prev = dlg.querySelectorAll('.w-kid .kid-prev')[i];
+    if (prev) prev.innerHTML = drawKid(kids[i], PREVIEW);
+  });
+  dlg.addEventListener('submit', (e) => {
+    e.preventDefault();
+    sync();
+    dlg.remove();
+    onDone(kids);
+  });
+  draw();
+  dlg.querySelector('#w-name-0')?.focus();
+}
+
+
+const LABELS = {
+  tee: 'חולצה קצרה', longsleeve: 'חולצה ארוכה', sweatshirt: 'סווטשירט', coat: 'מעיל',
+  shorts: 'מכנס קצר', pants: 'מכנס ארוך', sneakers: 'נעליים', sandals: 'סנדלים', boots: 'מגפיים',
+  umbrella: 'מטריה', beanie: 'כובע צמר', gloves: 'כפפות', scarf: 'צעיף', cap: 'כובע',
+};
+const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+
+let DEMO = 'layers';
+let DEMO_HOUR = 8;
+let DEMO_LABEL = '';
+let DEMO_RAIN = 'none';
+let DEMO_DAY = null;
+
+let settings = load();
+const state = { loc: null, forecast: null, error: null, fetchedAt: 0, wakeUntil: 0 };
+const app = document.getElementById('app');
+
+const now = () => {
+  const d = new Date();
+  if (DEMO_HOUR != null) d.setHours(DEMO_HOUR, 0, 0, 0);
+  return d;
+};
+
+// ---------- helpers ----------
+const STOPS = [[0, '#6f8fe8'], [8, '#7fb3f0'], [14, '#8fd6c8'], [19, '#a5dc7c'], [24, '#f7cf4f'], [29, '#f59f4c'], [34, '#e8604c']];
+function tempColor(t) {
+  if (t <= STOPS[0][0]) return STOPS[0][1];
+  for (let i = 1; i < STOPS.length; i++) {
+    if (t <= STOPS[i][0]) {
+      const [t0, c0] = STOPS[i - 1], [t1, c1] = STOPS[i];
+      return mix(c0, c1, (t - t0) / (t1 - t0));
+    }
+  }
+  return STOPS[STOPS.length - 1][1];
+}
+function mix(a, b, k) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const ch = (s) => Math.round(((pa >> s) & 255) * (1 - k) + ((pb >> s) & 255) * k);
+  return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+}
+const hh = (h) => `${String(h).padStart(2, '0')}:00`;
+const deg = (t) => `${Math.round(t)}°`;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const PHASES = ['בוקר', 'צהריים', 'ערב'];
+
+// a word for how it feels outside (the level names from the rules table)
+const feelWord = (t) => LEVEL_NAMES[levelIndex(t, settings.rules)];
+
+// ---------- data ----------
+async function refresh() {
+  if (DEMO) { render(); return; }
+  try {
+    state.loc = await resolveLocation(settings.location);
+    state.forecast = await fetchForecast(state.loc);
+    state.error = null;
+  } catch (e) {
+    state.error = e;
+  }
+  state.fetchedAt = Date.now();
+  render();
+}
+
+function targetDay(n) {
+  const tomorrow = n.getHours() >= settings.switchHour;
+  const d = new Date(n);
+  if (tomorrow) d.setDate(d.getDate() + 1);
+  return { tomorrow, date: d, key: dateKey(d) };
+}
+
+// ---------- render ----------
+function render() {
+  const n = now();
+  const { tomorrow, date, key } = targetDay(n);
+  const hour = n.getHours();
+  const night = hour >= settings.nightStart || hour < settings.nightEnd;
+  document.body.classList.toggle('tomorrow', tomorrow);
+  document.body.classList.toggle('night', night && Date.now() > state.wakeUntil);
+  manageWakeLock(night);
+
+  const day = DEMO ? (DEMO_DAY || demoDay(DEMO, DEMO_RAIN)) : state.forecast?.days?.[key];
+  const kids = settings.kids.length ? settings.kids : [];
+  const readers = kids.some(isReader);
+
+  let body;
+  if (!day) {
+    body = `<div class="empty">${weatherIcon(state.error ? 'cloudy' : 'partly')}<div class="spinner"></div></div>`;
+  } else {
+    const win = day.filter((h) => h.hour >= settings.leaveHour && h.hour <= settings.returnHour);
+    body = timeline(win, readers) +
+      scene(kids, planOutfit(win, 0, settings.rules));
+  }
+  app.innerHTML = header(tomorrow, date, readers) + body;
+  bindGear();
+}
+
+function header(tomorrow, date, readers) {
+  const badge = tomorrow
+    ? `<div class="day-badge moon">${weatherIcon('clear', true)}${readers ? `<span>מחר · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`
+    : `<div class="day-badge">${weatherIcon('clear')}${readers ? `<span>היום · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`;
+  const locName = DEMO ? `נתוני דוגמה · ${DEMO_LABEL}` : state.loc?.name || '';
+  const stale = state.forecast?.stale || state.error ? '<i class="stale" title="אין חיבור – מציג נתונים שמורים"></i>' : '';
+  return `<header class="top">${badge}<div class="where">${stale}<span>${esc(locName)}</span><button class="gear" aria-label="הגדרות (לחיצה ארוכה)">⚙</button></div></header>`;
+}
+
+// Three tiles: morning / noon / evening of the hours the kids are out.
+function timeline(win, readers) {
+  const tiles = phasesOf(win).map((ph, i) => {
+    const rainy = ph.filter((x) => isRainy(x, settings.rules));
+    const h = rainy.length ? rainy.reduce((a, b) => (b.precip > a.precip ? b : a)) : ph[Math.floor(ph.length / 2)];
+    let kind = iconKind(h);
+    if (rainy.length && !['rain', 'drizzle', 'storm', 'snow'].includes(kind)) kind = 'rain';
+    // show the coldest (feels-like) hour of this part of the day: that is the
+    // hour the clothes are chosen for, so the tile and the outfit agree
+    const cold = ph.reduce((a, b) => (b.feels < a.feels ? b : a));
+    const temp = Math.round(cold.temp);
+    const feels = cold.feels;
+    const pop = Math.max(...ph.map((x) => x.pop));
+    return `<div class="phase">` +
+      weatherIcon(kind, !h.day) +
+      `<div class="ptext"><span class="pname">${PHASES[i] || ''}</span>` +
+      `<div class="tchip" style="background:${tempColor(feels)}"><bdi dir="ltr">${temp}°</bdi></div>` +
+      `<span class="pfeel">${feelWord(feels)}</span>` +
+      (rainy.length ? `<div class="pop">💧 ${pop}%</div>` : '') +
+      `</div></div>`;
+  }).join('');
+  return `<section class="timeline">${tiles}</section>`;
+}
+
+// All the kids together, dressed alike for leaving the house, with one row of
+// clothing cards and one bag for what's needed later.
+function scene(kids, plan) {
+  if (!plan) return '';
+  const m = plan.morning;
+  const tint = kids[0]?.color;
+  const figs = kids.map((kid) => {
+    // size the figure by age so a 4-year-old stands shorter than an 8-year-old
+    const h = Math.max(70, Math.min(100, 70 + ((kid.age || 6) - 3) * 6));
+    const name = kid.name ? `<div class="fig-name" style="--c:${kid.color}">${esc(kid.name)}</div>` : '';
+    return `<div class="fig" style="--h:${h}"><div class="fig-art">${drawKid(kid, m, { mood: m.mood })}</div>${name}</div>`;
+  }).join('');
+  const card = (id) => `<div class="card">${itemIcon(id, tint)}<div class="clabel">${LABELS[id] || ''}</div></div>`;
+  const worn = [m.shirt, m.bottom, m.shoes, ...m.layers, ...m.acc];
+  const bag = plan.bag.length
+    ? `<div class="bag"><div class="bag-title">לשים בתיק</div><div class="bag-items">${plan.bag.map(card).join('')}</div>` +
+      `<div class="bag-arrow">⬇</div><div class="bag-icon">${itemIcon('backpack')}</div></div>`
+    : '';
+  return `<main class="scene kids-${kids.length}"><div class="scene-body"><div class="figs">${figs}</div>${bag}</div>` +
+    `<div class="items">${worn.map(card).join('')}</div></main>`;
+}
+
+// ---------- settings access (long press on the gear) ----------
+function bindGear() {
+  const g = app.querySelector('.gear');
+  if (!g) return;
+  let t;
+  const start = (e) => { e.preventDefault(); g.classList.add('pressing'); t = setTimeout(() => { g.classList.remove('pressing'); showSettings(); }, 1200); };
+  const cancel = () => { clearTimeout(t); g.classList.remove('pressing'); };
+  g.addEventListener('pointerdown', start);
+  g.addEventListener('pointerup', cancel);
+  g.addEventListener('pointerleave', cancel);
+  g.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+function showSettings() {
+  openSettings(settings, (next) => {
+    settings = { ...next, configured: true };
+    save(settings);
+    refresh();
+  });
+}
+
+// ---------- screen: keep awake by day, dim at night ----------
+let lock = null;
+async function manageWakeLock(night) {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    if (!night && !lock && document.visibilityState === 'visible') {
+      lock = await navigator.wakeLock.request('screen');
+      lock.addEventListener('release', () => { lock = null; });
+    } else if (night && lock) {
+      await lock.release();
+      lock = null;
+    }
+  } catch { /* not allowed right now */ }
+}
+
+// a tap at night wakes the screen for a minute
+document.addEventListener('pointerdown', () => {
+  if (document.body.classList.contains('night')) {
+    state.wakeUntil = Date.now() + 60_000;
+    render();
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  if (Date.now() - state.fetchedAt > 15 * 60_000) refresh(); else render();
+});
+
+setInterval(render, 60_000);
+setInterval(refresh, 30 * 60_000);
+
+
+function showWelcome() {
+  openWelcome(settings, (kids) => {
+    settings = { ...settings, kids, configured: true };
+    save(settings);
+    refresh();
+  });
+}
+
+window.__demo = { set(d, h, label, kids, rain, day) { DEMO_DAY = day || null; DEMO_RAIN = rain; DEMO = d; DEMO_HOUR = h; DEMO_LABEL = label; if (kids) settings = { ...settings, kids }; render(); }, get kids() { return settings.kids; } };
+
+
+const TEMPS = [10, 13, 16, 19, 22, 25, 28, 31].map((t) => [t, t + '°']);
+const RAINS = [[0, 'בלי'], [1, 'קל'], [2, 'חזק']];
+const KID1 = { id: 'a', name: 'ראם', age: 8, look: 'boy', skin: 0, hair: 0, hairStyle: 'short', color: '#7ec8e3', offset: 0 };
+const KID2 = { id: 'b', name: 'סער', age: 4, look: 'boy', skin: 0, hair: 1, hairStyle: 'curly', color: '#ffcf3f', offset: 0 };
+const st = { mt: 2, mr: 0, at: 5, ar: 0 };
+function chips(id, list, key) {
+  const g = document.getElementById(id);
+  list.forEach(([, label], i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.id = id + '-' + i;
+    b.addEventListener('click', (e) => { e.stopPropagation(); st[key] = i; apply(); });
+    g.appendChild(b);
+  });
+}
+chips('g-mt', TEMPS, 'mt'); chips('g-mr', RAINS, 'mr'); chips('g-at', TEMPS, 'at'); chips('g-ar', RAINS, 'ar');
+// morning = until 11:00, afternoon = from 12:00; temperature eases between them over 11–13
+function makeDay(mT, aT, mR, aR) {
+  const hours = [];
+  for (let h = 0; h < 24; h++) {
+    const k = h <= 10 ? 0 : h >= 13 ? 1 : (h - 10) / 3;
+    const t = Math.round((mT + (aT - mT) * k) * 10) / 10;
+    const r = h <= 11 ? mR : aR;
+    hours.push({
+      hour: h, temp: t, feels: t,
+      pop: r === 2 ? 95 : r === 1 ? 70 : 5,
+      precip: r === 2 ? 3 : r === 1 ? 0.5 : 0,
+      code: r === 2 ? 65 : r === 1 ? 61 : t >= 22 ? 0 : 2,
+      wind: 10, uv: h >= 9 && h <= 15 ? (t >= 24 ? 8 : 3) : 1, day: h >= 6 && h < 18 ? 1 : 0,
+    });
+  }
+  return hours;
+}
+function apply() {
+  for (const id of ['mt', 'mr', 'at', 'ar'])
+    document.querySelectorAll('#g-' + id + ' button').forEach((b, i) => b.setAttribute('aria-pressed', String(i === st[id])));
+  const cur = window.__demo.kids;
+  const kids = cur && cur.length ? cur : [KID1, KID2];
+  const mT = TEMPS[st.mt][0], aT = TEMPS[st.at][0];
+  const label = 'בוקר ' + mT + '° ' + RAINS[st.mr][1] + ' גשם · אחה״צ ' + aT + '° ' + RAINS[st.ar][1] + ' גשם';
+  window.__demo.set('custom', 8, label, kids, 'none', makeDay(mT, aT, RAINS[st.mr][0], RAINS[st.ar][0]));
+}
+apply();
+</script>
+
+</html>

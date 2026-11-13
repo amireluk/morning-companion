@@ -4,6 +4,8 @@ import { defaultRules, normalizeRules } from './outfit.js';
 
 const KEY = 'mc.settings';
 
+export const MAX_KIDS = 3;
+
 export const newKid = (i = 0) => ({
   id: Math.random().toString(36).slice(2, 9),
   name: '',
@@ -13,7 +15,6 @@ export const newKid = (i = 0) => ({
   skin: 0,
   hair: i % 2 ? 2 : 1,
   color: SHIRT_COLORS[i % SHIRT_COLORS.length],
-  offset: 0, // + runs warm, - runs cold (degrees)
 });
 
 export const defaults = () => ({
@@ -23,10 +24,7 @@ export const defaults = () => ({
   switchHour: 17, // from this hour on, show tomorrow
   nightStart: 21,
   nightEnd: 6,
-  kids: [
-    { ...newKid(0), name: 'ראם', age: 8, look: 'boy', hair: 0, hairStyle: 'short', color: '#7ec8e3' },
-    { ...newKid(1), name: 'סער', age: 4, look: 'boy', hair: 1, hairStyle: 'curly', color: '#ffcf3f' },
-  ],
+  kids: [newKid(0)], // the welcome screen asks for the real names on first load
   rules: defaultRules(),
   configured: false,
 });

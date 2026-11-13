@@ -1,25 +1,31 @@
 // Turns an hourly forecast for the hours the kid is out into an outfit plan.
-// All temperatures are "feels like" (apparent) temperatures, shifted by the
-// kid's personal offset (positive = this kid runs warm).
+// All temperatures are "feels like" (apparent) temperatures (an optional offset
+// shifts them: positive = runs warm).
 //
 // The rules are a small table the parent can edit in settings: six feel levels
-// (very cold … very hot), each with an upper bound and what to wear in it.
+// (freezing … very hot), each with an upper bound and what to wear in it.
 
-export const LEVEL_NAMES = ['קר מאוד', 'קר', 'קריר', 'נעים', 'חם', 'חם מאוד'];
+export const LEVEL_NAMES = ['קפוא', 'קר מאוד', 'קר', 'קריר', 'נעים', 'חם', 'חם מאוד'];
 
-// Defaults tuned for Israel: 12° is very cold, 17° is cold, 24° is pleasant,
-// 26° is warm, 30° is hot. Bump RULES_VERSION when the defaults change so
-// browsers holding the old defaults pick up the new ones.
-const RULES_VERSION = 2;
+// Defaults tuned for Israel. People here are comfortable at about 20–25°C
+// (a Tel Aviv outdoor-comfort study), so under ~19° already feels cold and the
+// puffer coat starts at 14°; beanie, scarf and gloves only below 10°.
+// Bump RULES_VERSION when the defaults change so browsers holding the old
+// defaults pick up the new ones.
+const RULES_VERSION = 3;
+const lvl = (max, shirt, bottom, shoes, extra = {}) => ({
+  max, shirt, bottom, shoes, sweatshirt: false, coat: false, winter: false, cap: false, ...extra,
+});
 export const defaultRules = () => ({
   v: RULES_VERSION,
   levels: [
-    { max: 14, shirt: 'long', bottom: 'pants', shoes: 'sneakers', sweatshirt: true, coat: true, winter: true, cap: false },
-    { max: 19, shirt: 'long', bottom: 'pants', shoes: 'sneakers', sweatshirt: true, coat: true, winter: false, cap: false },
-    { max: 23, shirt: 'long', bottom: 'pants', shoes: 'sneakers', sweatshirt: true, coat: false, winter: false, cap: false },
-    { max: 26, shirt: 'tee', bottom: 'shorts', shoes: 'sneakers', sweatshirt: false, coat: false, winter: false, cap: false },
-    { max: 29, shirt: 'tee', bottom: 'shorts', shoes: 'sneakers', sweatshirt: false, coat: false, winter: false, cap: true },
-    { max: null, shirt: 'tee', bottom: 'shorts', shoes: 'sandals', sweatshirt: false, coat: false, winter: false, cap: true },
+    lvl(10, 'long', 'pants', 'sneakers', { sweatshirt: true, coat: true, winter: true }), // freezing
+    lvl(14, 'long', 'pants', 'sneakers', { sweatshirt: true, coat: true }), // very cold
+    lvl(19, 'long', 'pants', 'sneakers', { sweatshirt: true }), // cold
+    lvl(23, 'long', 'pants', 'sneakers'), // cool: a thin long-sleeve shirt
+    lvl(26, 'tee', 'shorts', 'sneakers'), // pleasant
+    lvl(29, 'tee', 'shorts', 'sneakers', { cap: true }), // warm
+    lvl(null, 'tee', 'shorts', 'sandals', { cap: true }), // hot
   ],
   rain: { chance: 50, bootsMm: 6 },
 });

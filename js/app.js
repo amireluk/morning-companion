@@ -2,13 +2,12 @@ import { drawKid, itemIcon, weatherIcon } from './art.js';
 import { planOutfit, phasesOf, isRainy, levelIndex, LEVEL_NAMES } from './outfit.js';
 import { resolveLocation, fetchForecast, dateKey, iconKind, demoDay } from './weather.js';
 import { load, save, isReader } from './store.js';
-import { openSettings } from './settings.js';
+import { openSettings, openWelcome } from './settings.js';
 
 const LABELS = {
   tee: 'חולצה קצרה', longsleeve: 'חולצה ארוכה', sweatshirt: 'סווטשירט', coat: 'מעיל',
   shorts: 'מכנס קצר', pants: 'מכנס ארוך', sneakers: 'נעליים', sandals: 'סנדלים', boots: 'מגפיים',
   umbrella: 'מטריה', beanie: 'כובע צמר', gloves: 'כפפות', scarf: 'צעיף', cap: 'כובע',
-  bottle: 'בקבוק מים',
 };
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
@@ -93,7 +92,7 @@ function render() {
   } else {
     const win = day.filter((h) => h.hour >= settings.leaveHour && h.hour <= settings.returnHour);
     body = timeline(win, readers) +
-      `<main class="kids kids-${kids.length}">${kids.map((k) => kidCard(k, planOutfit(win, k.offset || 0, settings.rules))).join('')}</main>`;
+      scene(kids, planOutfit(win, 0, settings.rules));
   }
   app.innerHTML = header(tomorrow, date, readers) + body;
   bindGear();
@@ -132,23 +131,26 @@ function timeline(win, readers) {
   return `<section class="timeline">${tiles}</section>`;
 }
 
-// One figure dressed for leaving the house + what goes in the bag for later.
-function kidCard(kid, plan) {
+// All the kids together, dressed alike for leaving the house, with one row of
+// clothing cards and one bag for what's needed later.
+function scene(kids, plan) {
   if (!plan) return '';
-  const reader = isReader(kid);
   const m = plan.morning;
-  // size the figure by age so a 4-year-old stands shorter than an 8-year-old
-  const h = Math.max(70, Math.min(100, 70 + ((kid.age || 6) - 3) * 6));
-  const fig = `<div class="fig" style="--h:${h}">${drawKid(kid, m, { mood: m.mood })}</div>`;
+  const tint = kids[0]?.color;
+  const figs = kids.map((kid) => {
+    // size the figure by age so a 4-year-old stands shorter than an 8-year-old
+    const h = Math.max(70, Math.min(100, 70 + ((kid.age || 6) - 3) * 6));
+    const name = kid.name ? `<div class="fig-name" style="--c:${kid.color}">${esc(kid.name)}</div>` : '';
+    return `<div class="fig" style="--h:${h}"><div class="fig-art">${drawKid(kid, m, { mood: m.mood })}</div>${name}</div>`;
+  }).join('');
+  const card = (id) => `<div class="card">${itemIcon(id, tint)}<div class="clabel">${LABELS[id] || ''}</div></div>`;
   const worn = [m.shirt, m.bottom, m.shoes, ...m.layers, ...m.acc];
-  const items = `<div class="items">${worn.map((id) => `<div class="card">${itemIcon(id, kid.color)}${reader ? `<div class="clabel">${LABELS[id] || ''}</div>` : ''}</div>`).join('')}</div>`;
   const bag = plan.bag.length
-    ? `<div class="bag">${reader ? '<div class="bag-title">לשים בתיק</div>' : ''}` +
-      `<div class="bag-items">${plan.bag.map((id) => `<div class="card">${itemIcon(id, kid.color)}${reader ? `<div class="clabel">${LABELS[id] || ''}</div>` : ''}</div>`).join('')}</div>` +
+    ? `<div class="bag"><div class="bag-title">לשים בתיק</div><div class="bag-items">${plan.bag.map(card).join('')}</div>` +
       `<div class="bag-arrow">⬇</div><div class="bag-icon">${itemIcon('backpack')}</div></div>`
     : '';
-  const name = kid.name ? `<div class="kid-name" style="--c:${kid.color}">${esc(kid.name)}</div>` : '';
-  return `<section class="kid${bag ? ' has-bag' : ''}">${name}<div class="kid-body">${fig}${bag}</div>${items}</section>`;
+  return `<main class="scene kids-${kids.length}"><div class="scene-body"><div class="figs">${figs}</div>${bag}</div>` +
+    `<div class="items">${worn.map(card).join('')}</div></main>`;
 }
 
 // ---------- settings access (long press on the gear) ----------
@@ -205,6 +207,14 @@ setInterval(refresh, 30 * 60_000);
 
 if ('serviceWorker' in navigator && !DEMO) navigator.serviceWorker.register('sw.js').catch(() => {});
 
+function showWelcome() {
+  openWelcome(settings, (kids) => {
+    settings = { ...settings, kids, configured: true };
+    save(settings);
+    refresh();
+  });
+}
+
 render();
 refresh();
-if (!settings.configured && !DEMO) showSettings();
+if (!settings.configured && !DEMO) showWelcome();
