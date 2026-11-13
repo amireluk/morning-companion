@@ -43,16 +43,23 @@ async function reverseName({ lat, lon }) {
   return j.city || j.locality || null;
 }
 
+// City name lookup for the settings' type-ahead (works from about 3 letters).
+// Israeli places come first.
 export async function searchCity(q) {
-  const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=he&format=json`);
+  const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=12&language=he&format=json`);
   if (!r.ok) throw new Error('search failed');
   const j = await r.json();
-  return (j.results || []).map((x) => ({
-    name: x.name,
-    detail: [x.admin1, x.country].filter(Boolean).join(', '),
-    lat: x.latitude,
-    lon: x.longitude,
-  }));
+  return (j.results || [])
+    .map((x, i) => ({
+      name: x.name,
+      detail: [x.admin1, x.country].filter(Boolean).join(', '),
+      lat: x.latitude,
+      lon: x.longitude,
+      rank: (x.country_code === 'IL' ? 0 : 100) + i,
+    }))
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, 8)
+    .map(({ rank, ...c }) => c);
 }
 
 const HOURLY = 'temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,uv_index,is_day';

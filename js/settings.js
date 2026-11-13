@@ -70,7 +70,7 @@ export function openSettings(current, onSave) {
       <div class="lv-line"><span class="lv-lab">חולצה</span>${seg(`${a} data-lf="shirt"`, [['long', 'ארוכה', 'longsleeve'], ['tee', 'קצרה', 'tee']], l.shirt)}</div>
       <div class="lv-line"><span class="lv-lab">מכנס</span>${seg(`${a} data-lf="bottom"`, [['pants', 'ארוך', 'pants'], ['shorts', 'קצר', 'shorts']], l.bottom)}</div>
       <div class="lv-line"><span class="lv-lab">נעליים</span>${seg(`${a} data-lf="shoes"`, [['sneakers', 'נעליים', 'sneakers'], ['sandals', 'סנדלים', 'sandals']], l.shoes)}</div>
-      <div class="lv-line top"><span class="lv-lab">גם</span><div class="chips">${chip('sweatshirt', 'sweatshirt', 'סווטשירט')}${chip('coat', 'coat', 'מעיל')}${chip('winter', 'beanie', 'כובע צמר, צעיף וכפפות')}${chip('cap', 'cap', 'כובע שמש')}</div></div>
+      <div class="lv-line lv-top"><span class="lv-lab">גם</span><div class="chips">${chip('sweatshirt', 'sweatshirt', 'סווטשירט')}${chip('coat', 'coat', 'מעיל')}${chip('winter', 'beanie', 'כובע צמר, צעיף וכפפות')}${chip('cap', 'cap', 'כובע שמש')}</div></div>
     </div>`;
   }
 
@@ -94,8 +94,8 @@ export function openSettings(current, onSave) {
       <div class="hint">חולצה, מכנס ונעליים – לפי השעה החמה ביום. סווטשירט, מעיל ובגדי חורף – לפי השעה הקרה. מה שצריך רק בהמשך היום מופיע ב"לקחת איתך".</div>
     </fieldset>
     <fieldset><legend>גשם</legend>
-      <div class="lv-line"><span class="lv-lab">מטריה מסיכוי של</span>${stepper('data-rain="chance"', R.rain.chance, 10, 100, '%')}</div>
-      <div class="lv-line top"><span class="lv-lab">מגפיים</span>${seg('data-rain="boots"', [['never', 'אף פעם'], ['heavy', 'בגשם חזק'], ['any', 'בכל גשם']], R.rain.boots)}</div>
+      <div class="lv-line stack"><span class="lv-lab">מטריה כשסיכוי הגשם לפחות</span>${stepper('data-rain="chance"', R.rain.chance, 10, 100, '%')}</div>
+      <div class="lv-line stack"><span class="lv-lab">מגפיים</span>${seg('data-rain="boots"', [['never', 'אף פעם'], ['heavy', 'בגשם חזק'], ['any', 'בכל גשם']], R.rain.boots)}</div>
       <button type="button" class="reset-rules">החזרת ברירת המחדל</button>
     </fieldset>`;
   }
@@ -121,8 +121,8 @@ export function openSettings(current, onSave) {
         ${L.mode === 'auto'
           ? ''
           : `<div class="hint">נבחר: <b>${esc(L.name)}</b></div>
-             <div class="row"><input id="cityq" type="search" enterkeyhint="search" autocomplete="off" placeholder="חיפוש עיר…"><button type="button" id="citygo">חיפוש</button></div>
-             <div id="cityres"></div>`}
+             <input id="cityq" class="cityq" type="search" enterkeyhint="search" autocomplete="off" placeholder="הקלידו שם של עיר או יישוב…">
+             <div id="cityres" class="cityres"></div>`}
       </fieldset>
       <fieldset><legend>שעות</legend>
         <div class="hint">הבגדים מותאמים לשעות שהילדים מחוץ לבית. את הזמן הזה מחלקים לבוקר, צהריים ואחה״צ.</div>
@@ -180,7 +180,6 @@ export function openSettings(current, onSave) {
       s.location = b.dataset.loc === 'auto' ? { ...s.location, mode: 'auto' } : { ...s.location, mode: 'manual' };
       return draw();
     }
-    if (b.id === 'citygo') return doSearch();
     if (b.dataset.city) {
       const c = JSON.parse(b.dataset.city);
       s.location = { mode: 'manual', name: c.name, lat: c.lat, lon: c.lon };
@@ -209,8 +208,18 @@ export function openSettings(current, onSave) {
     }
   });
 
+  // city type-ahead: the list narrows as you type
+  let searchTimer = 0;
+  dlg.addEventListener('input', (e) => {
+    if (e.target.id !== 'cityq') return;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(doSearch, 250);
+  });
   dlg.addEventListener('keydown', (e) => {
-    if (e.target.id === 'cityq' && e.key === 'Enter') { e.preventDefault(); doSearch(); }
+    if (e.target.id === 'cityq' && e.key === 'Enter') {
+      e.preventDefault();
+      dlg.querySelector('.cityres .city')?.click(); // Enter picks the top match
+    }
   });
 
   dlg.addEventListener('submit', (e) => {
@@ -228,18 +237,22 @@ export function openSettings(current, onSave) {
     if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
+  let searchSeq = 0;
   async function doSearch() {
-    const q = dlg.querySelector('#cityq').value.trim();
+    const q = dlg.querySelector('#cityq')?.value.trim() || '';
     const out = dlg.querySelector('#cityres');
-    if (!q) return;
-    out.textContent = '…';
+    if (!out) return;
+    const seq = ++searchSeq;
+    if (q.length < 2) { out.innerHTML = ''; return; }
+    out.innerHTML = '<div class="city-msg">…</div>';
     try {
       const res = await searchCity(q);
+      if (seq !== searchSeq) return; // a newer search is on its way
       out.innerHTML = res.length
-        ? res.map((c) => `<button type="button" class="city" data-city='${esc(JSON.stringify(c))}'>${esc(c.name)} <small>${esc(c.detail)}</small></button>`).join('')
-        : 'לא נמצא';
+        ? res.map((c) => `<button type="button" class="city" data-city='${esc(JSON.stringify(c))}'><b>${esc(c.name)}</b> <small>${esc(c.detail)}</small></button>`).join('')
+        : `<div class="city-msg">${q.length < 3 ? 'המשיכו להקליד…' : 'לא נמצא'}</div>`;
     } catch {
-      out.textContent = 'אין חיבור לאינטרנט';
+      if (seq === searchSeq) out.innerHTML = '<div class="city-msg">אין חיבור לאינטרנט</div>';
     }
   }
 
