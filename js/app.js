@@ -1,5 +1,5 @@
 import { drawKid, itemIcon, weatherIcon } from './art.js';
-import { planOutfit, phasesOf, isRainy, levelIndex, LEVEL_NAMES } from './outfit.js';
+import { planOutfit, phasesOf, isRainy, levelIndex, LEVEL_NAMES, LEVEL_COLORS } from './outfit.js';
 import { resolveLocation, fetchForecast, dateKey, iconKind, demoDay } from './weather.js';
 import { load, save, isReader } from './store.js';
 import { openSettings } from './settings.js';
@@ -30,7 +30,6 @@ const now = () => {
 // ---------- helpers ----------
 // one colour per feel level (freezing → very hot), so the chip colour, the word
 // and the clothes all follow the same rules table
-const LEVEL_COLORS = ['#6f8fe8', '#7fb3f0', '#8fd6c8', '#b5df8a', '#f7cf4f', '#f59f4c', '#e8604c'];
 const levelColor = (t) => {
   const i = levelIndex(t, settings.rules), n = settings.rules.levels.length;
   return LEVEL_COLORS[Math.round((i / Math.max(1, n - 1)) * (LEVEL_COLORS.length - 1))];

@@ -357,18 +357,49 @@ legend { font-weight: 700; padding: 0 6px; }
   .clabel { font-size: 11px; }
 }
 
-/* rules table in settings */
-.rules-wrap { overflow-x: auto; margin: 8px 0; }
-.rules { border-collapse: collapse; font-size: 15px; min-width: 700px; }
-.rules th, .rules td { padding: 4px 6px; text-align: center; border-bottom: 1px solid var(--edge); vertical-align: middle; }
-.rules thead th { font-weight: 500; color: var(--muted); font-size: 13px; line-height: 1.15; }
-.rules .th-ic { display: block; width: 30px; margin: 0 auto 2px; }
-.rules .th-ic svg { width: 100%; height: auto; }
-.rules th.lvl { text-align: start; font-weight: 700; white-space: nowrap; }
-.rules td.rng { white-space: nowrap; }
-.panel .rules input[type=number] { width: 58px; padding: 4px 6px; }
-.panel .rules select { font-size: 16px; padding: 4px 6px; }
-.rules input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--accent); }
+/* temperatures & clothes editor in settings: colour ruler + one row per level */
+.ruler { display: flex; align-items: stretch; margin: 10px 0 12px; border-radius: 12px; overflow: hidden; }
+.ruler .rl { flex: 1 1 0; min-width: 0; min-height: 26px; }
+.ruler .rl-b { flex: 0 0 auto; align-self: center; font-size: 12px; font-weight: 700; padding: 0 3px; background: #fffdf8; }
+.levels { display: flex; flex-direction: column; gap: 8px; }
+.lv { border: 2px solid var(--edge); border-radius: 16px; background: #fff; overflow: hidden; }
+.lv.open { border-color: var(--c); box-shadow: 0 0 0 2px var(--c) inset; }
+.panel .lv-head {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; width: 100%; min-height: 60px;
+  padding: 8px 12px; border: 0; border-radius: 0; background: none; font: inherit; color: inherit; text-align: start; cursor: pointer;
+}
+.lv-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--c); flex: none; }
+.lv-name { font-weight: 700; font-size: 17px; }
+.lv-rng { color: var(--muted); font-size: 15px; }
+.lv-icons { display: flex; gap: 2px; flex-basis: 100%; padding-inline-start: 26px; }
+.lv-icons svg { width: 26px; height: 26px; }
+.lv-chev { width: 24px; height: 24px; color: var(--muted); margin-inline-start: auto; transition: transform .15s; flex: none; }
+.lv.open .lv-chev { transform: rotate(180deg); }
+.lv-body { padding: 4px 12px 14px; display: grid; gap: 10px; border-top: 1px dashed var(--edge); }
+.lv-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lv-line.top { align-items: flex-start; }
+.lv-lab { min-width: 58px; font-weight: 700; color: var(--muted); }
+.lv-line.top .lv-lab { padding-top: 12px; }
+.stepper { display: inline-flex; align-items: center; gap: 6px; }
+.panel .step { width: 48px; height: 48px; min-height: 48px; padding: 0; border-radius: 50%; font-size: 26px; line-height: 1; font-weight: 700; }
+.panel .step:disabled { opacity: .35; }
+.step-v { min-width: 64px; text-align: center; font-size: 24px; font-weight: 700; }
+.seg { display: flex; flex: 1; max-width: 340px; border: 2px solid var(--edge); border-radius: 14px; overflow: hidden; }
+.lv-line > .lv-lab + .seg { min-width: 0; }
+.panel .seg-b, .panel .chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 4px 12px;
+  border: 0; border-radius: 0; background: #fff; font: inherit; font-size: 15px; color: inherit; cursor: pointer;
+}
+.panel .seg-b { flex: 1 1 0; justify-content: center; padding: 4px 6px; min-width: 0; }
+.panel .seg-b + .seg-b { border-inline-start: 2px solid var(--edge); }
+.panel .seg-b.on { background: #fff0dc; font-weight: 700; box-shadow: inset 0 -4px 0 var(--accent); }
+.seg-ic { display: inline-flex; width: 30px; height: 30px; }
+.seg-ic svg { width: 100%; height: 100%; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+.panel .chip { border: 2px solid var(--edge); border-radius: 99px; color: var(--muted); }
+.panel .chip:not(.on) .seg-ic { filter: grayscale(1); opacity: .5; }
+.panel .chip.on { color: var(--ink); border-color: var(--accent); background: #fff0dc; font-weight: 700; }
+.panel .chip.on::after { content: '✓'; color: var(--accent); font-weight: 700; }
 .panel label > span { display: inline-flex; align-items: center; gap: 6px; }
 .panel label > span input[type=number] { width: 72px; }
 
@@ -379,7 +410,6 @@ legend { font-weight: 700; padding: 0 6px; }
 
 /* settings: controls next to their labels, bigger checkboxes */
 .panel fieldset > label { max-width: 560px; }
-.rules input[type=checkbox] { width: 30px; height: 30px; }
 
 
 
@@ -404,14 +434,6 @@ legend { font-weight: 700; padding: 0 6px; }
 }
 .panel .tab.on { color: var(--ink); border-bottom-color: var(--accent); background: #fff6ea; }
 
-/* rules table: keep the level names visible while scrolling sideways */
-.rules th.lvl, .rules thead th:first-child {
-  position: sticky;
-  inset-inline-start: 0;
-  background: #fffdf8;
-  z-index: 1;
-  box-shadow: -6px 0 6px -6px rgba(61,43,31,.25);
-}
 
 /* ---------- phones: fixes from the phone review ---------- */
 @media (max-width: 700px), (max-height: 500px) {
@@ -444,7 +466,6 @@ legend { font-weight: 700; padding: 0 6px; }
   .panel input:not([type=checkbox]), .panel select, .panel button:not(.sw) { min-height: 44px; }
   .sw { width: 40px; height: 40px; }
   .panel .row { gap: 10px; }
-  .rules { min-width: 600px; }
 }
 
 /* "שים לב" row: only shown when something is unusual */

@@ -6,6 +6,7 @@
 // (freezing … very hot), each with an upper bound and what to wear in it.
 
 export const LEVEL_NAMES = ['קפוא', 'קר מאוד', 'קר', 'קריר', 'נעים', 'חם', 'חם מאוד'];
+export const LEVEL_COLORS = ['#6f8fe8', '#7fb3f0', '#8fd6c8', '#b5df8a', '#f7cf4f', '#f59f4c', '#e8604c'];
 
 // Defaults tuned for Israel. People here are comfortable at about 20–25°C
 // (a Tel Aviv outdoor-comfort study), so under ~19° already feels cold and the

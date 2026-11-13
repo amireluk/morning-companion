@@ -1,7 +1,7 @@
 import { searchCity } from './weather.js';
 import { newKid, MAX_KIDS } from './store.js';
 import { SKINS, HAIRS, SHIRT_COLORS, drawKid, hairStyleOf, itemIcon } from './art.js';
-import { LEVEL_NAMES, defaultRules, normalizeRules } from './outfit.js';
+import { LEVEL_NAMES, LEVEL_COLORS, defaultRules, normalizeRules } from './outfit.js';
 
 const hourOpts = (sel, from, to) => {
   let s = '';
@@ -41,37 +41,67 @@ export function openSettings(current, onSave) {
       </div></div>`;
   }
 
-  // the editable "temperatures and clothes" table
+  // "temperatures and clothes": one row per feel level; tapping a row opens it
+  // to edit its upper bound (stepper) and what to wear (icon toggles)
+  const TINT = '#7ec8e3';
+  const deg = (t) => `<bdi dir="ltr">${t}°</bdi>`;
+  const rangeText = (R, i) => {
+    const last = R.levels.length - 1, lo = i ? R.levels[i - 1].max : null;
+    return i === 0 ? `מתחת ל־${deg(R.levels[0].max)}` : i === last ? `מ־${deg(lo)} ומעלה` : `<bdi dir="ltr">${lo}°–${R.levels[i].max}°</bdi>`;
+  };
+  const wearIcons = (l) => [l.shirt === 'tee' ? 'tee' : 'longsleeve', l.bottom, l.shoes,
+    ...(l.sweatshirt ? ['sweatshirt'] : []), ...(l.coat ? ['coat'] : []), ...(l.winter ? ['beanie'] : []), ...(l.cap ? ['cap'] : [])];
+  const seg = (attrs, opts, v) => `<div class="seg">${opts.map(([o, t, ic]) =>
+    `<button type="button" class="seg-b${o === v ? ' on' : ''}" aria-pressed="${o === v}" ${attrs} data-v="${o}">${ic ? `<span class="seg-ic">${itemIcon(ic, TINT)}</span>` : ''}<span>${t}</span></button>`).join('')}</div>`;
+  const stepper = (attrs, value, min, max, unit) =>
+    `<div class="stepper"><button type="button" class="step" ${attrs} data-step="1" aria-label="יותר"${value >= max ? ' disabled' : ''}>+</button>` +
+    `<span class="step-v"><bdi dir="ltr">${value}${unit}</bdi></span>` +
+    `<button type="button" class="step" ${attrs} data-step="-1" aria-label="פחות"${value <= min ? ' disabled' : ''}>−</button></div>`;
+  const boundsOf = (R, i) => ({ min: i ? R.levels[i - 1].max + 1 : -20, max: i < R.levels.length - 2 ? R.levels[i + 1].max - 1 : 50 });
+
+  function levelBody(R, i) {
+    const l = R.levels[i], last = R.levels.length - 1;
+    const a = `data-lv="${i}"`;
+    const bound = i === last
+      ? `<div class="lv-line"><span class="lv-lab">טמפרטורה</span><span>${rangeText(R, i)}</span></div>`
+      : (() => { const b = boundsOf(R, i); return `<div class="lv-line"><span class="lv-lab">עד</span>${stepper(`${a} data-lf="max"`, l.max, b.min, b.max, '°')}</div>`; })();
+    const chip = (f, ic, t) => `<button type="button" class="chip${l[f] ? ' on' : ''}" aria-pressed="${!!l[f]}" ${a} data-lf="${f}" data-toggle="1"><span class="seg-ic">${itemIcon(ic, TINT)}</span><span>${t}</span></button>`;
+    return `<div class="lv-body">${bound}
+      <div class="lv-line"><span class="lv-lab">חולצה</span>${seg(`${a} data-lf="shirt"`, [['long', 'ארוכה', 'longsleeve'], ['tee', 'קצרה', 'tee']], l.shirt)}</div>
+      <div class="lv-line"><span class="lv-lab">מכנס</span>${seg(`${a} data-lf="bottom"`, [['pants', 'ארוך', 'pants'], ['shorts', 'קצר', 'shorts']], l.bottom)}</div>
+      <div class="lv-line"><span class="lv-lab">נעליים</span>${seg(`${a} data-lf="shoes"`, [['sneakers', 'נעליים', 'sneakers'], ['sandals', 'סנדלים', 'sandals']], l.shoes)}</div>
+      <div class="lv-line top"><span class="lv-lab">גם</span><div class="chips">${chip('sweatshirt', 'sweatshirt', 'סווטשירט')}${chip('coat', 'coat', 'מעיל')}${chip('winter', 'beanie', 'כובע צמר, צעיף וכפפות')}${chip('cap', 'cap', 'כובע שמש')}</div></div>
+    </div>`;
+  }
+
   function rulesHtml() {
-    const R = s.rules, last = R.levels.length - 1;
-    const sel = (i, f, opts, v) => `<select data-lv="${i}" data-lf="${f}">${opts.map(([o, t]) => `<option value="${o}"${o === v ? ' selected' : ''}>${t}</option>`).join('')}</select>`;
-    const chk = (i, f, v) => `<input type="checkbox" data-lv="${i}" data-lf="${f}"${v ? ' checked' : ''}>`;
-    const head = (icon, t) => `<th><span class="th-ic">${itemIcon(icon, '#7ec8e3')}</span>${t}</th>`;
+    const R = s.rules;
+    const ruler = R.levels.map((l, i) =>
+      `<div class="rl" style="background:${LEVEL_COLORS[i]}" title="${LEVEL_NAMES[i]}"></div>${i < R.levels.length - 1 ? `<div class="rl-b">${deg(l.max)}</div>` : ''}`).join('');
     const rows = R.levels.map((l, i) => {
-      const lo = i === 0 ? null : R.levels[i - 1].max;
-      const range = i === last
-        ? `מ־<bdi dir="ltr">${lo}°</bdi>`
-        : `${i === 0 ? 'מתחת ל־' : `<bdi dir="ltr">${lo}°</bdi> עד`} <input type="number" data-lv="${i}" data-lf="max" value="${l.max}">°`;
-      return `<tr><th class="lvl">${LEVEL_NAMES[i]}</th><td class="rng">${range}</td>` +
-        `<td>${sel(i, 'shirt', [['long', 'ארוכה'], ['tee', 'קצרה']], l.shirt)}</td>` +
-        `<td>${sel(i, 'bottom', [['pants', 'ארוך'], ['shorts', 'קצר']], l.bottom)}</td>` +
-        `<td>${sel(i, 'shoes', [['sneakers', 'נעליים'], ['sandals', 'סנדלים']], l.shoes)}</td>` +
-        `<td>${chk(i, 'sweatshirt', l.sweatshirt)}</td><td>${chk(i, 'coat', l.coat)}</td><td>${chk(i, 'winter', l.winter)}</td>` +
-        `<td>${chk(i, 'cap', l.cap)}</td></tr>`;
+      const open = openLv === i;
+      return `<div class="lv${open ? ' open' : ''}" style="--c:${LEVEL_COLORS[i]}">
+        <button type="button" class="lv-head" data-open="${i}" aria-expanded="${open}">
+          <span class="lv-dot"></span><span class="lv-name">${LEVEL_NAMES[i]}</span><span class="lv-rng">${rangeText(R, i)}</span>
+          <svg class="lv-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="lv-icons">${wearIcons(l).map((ic) => itemIcon(ic, TINT)).join('')}</span>
+        </button>${open ? levelBody(R, i) : ''}</div>`;
     }).join('');
     return `<fieldset><legend>טמפרטורות ובגדים</legend>
-      <div class="hint">לפי הטמפרטורה המורגשת. אפשר לשנות את הגבולות ואת מה לובשים בכל טווח.</div>
-      <div class="rules-wrap"><table class="rules">
-        <thead><tr><th>תחושה</th><th>טמפ׳</th>${head('tee', 'חולצה')}${head('pants', 'מכנס')}${head('sneakers', 'נעליים')}${head('sweatshirt', 'סווטשירט')}${head('coat', 'מעיל')}${head('beanie', 'כובע צמר, צעיף, כפפות')}${head('cap', 'כובע שמש')}</tr></thead>
-        <tbody>${rows}</tbody></table></div>
+      <div class="hint">לפי הטמפרטורה המורגשת. לחיצה על שורה פותחת אותה לעריכה.</div>
+      <div class="ruler">${ruler}</div>
+      <div class="levels">${rows}</div>
       <div class="hint">חולצה, מכנס ונעליים – לפי השעה החמה ביום. סווטשירט, מעיל ובגדי חורף – לפי השעה הקרה. מה שצריך רק בהמשך היום מופיע ב"לקחת איתך".</div>
-      <label>מטריה כשסיכוי הגשם לפחות <span><input type="number" min="0" max="100" data-rain="chance" value="${R.rain.chance}"> %</span></label>
-      <label>מגפיי גשם <select data-rain="boots">${[['heavy', 'רק בגשם חזק'], ['any', 'בכל גשם'], ['never', 'אף פעם']].map(([v, t]) => `<option value="${v}"${R.rain.boots === v ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
+    </fieldset>
+    <fieldset><legend>גשם</legend>
+      <div class="lv-line"><span class="lv-lab">מטריה מסיכוי של</span>${stepper('data-rain="chance"', R.rain.chance, 10, 100, '%')}</div>
+      <div class="lv-line top"><span class="lv-lab">מגפיים</span>${seg('data-rain="boots"', [['never', 'אף פעם'], ['heavy', 'בגשם חזק'], ['any', 'בכל גשם']], R.rain.boots)}</div>
       <button type="button" class="reset-rules">החזרת ברירת המחדל</button>
     </fieldset>`;
   }
 
   let tab = 'kids';
+  let openLv = -1; // which feel level is open for editing
   // names are typed into inputs that a redraw replaces: copy them first
   const syncNames = () => dlg.querySelectorAll('input[data-f="name"]').forEach((el) => { s.kids[+el.dataset.k].name = el.value.trim(); });
 
@@ -124,7 +154,26 @@ export function openSettings(current, onSave) {
       dlg.querySelector('.panel').scrollTop = 0; // a new tab starts at its top
       return;
     }
-    if (b.classList.contains('reset-rules')) { s.rules = defaultRules(); return draw(); }
+    if (b.classList.contains('reset-rules')) {
+      if (confirm('להחזיר את הטמפרטורות והבגדים לברירת המחדל?')) { s.rules = defaultRules(); openLv = -1; draw(); }
+      return;
+    }
+    if (b.dataset.open != null) { openLv = openLv === +b.dataset.open ? -1 : +b.dataset.open; draw(); return revealOpen(); }
+    if (b.dataset.lv != null) {
+      const i = +b.dataset.lv, l = s.rules.levels[i], f = b.dataset.lf;
+      if (b.dataset.step) {
+        const { min, max } = boundsOf(s.rules, i);
+        l.max = Math.max(min, Math.min(max, l.max + Number(b.dataset.step)));
+      } else if (b.dataset.toggle) l[f] = !l[f];
+      else l[f] = b.dataset.v;
+      return draw();
+    }
+    if (b.dataset.rain) {
+      const R = s.rules.rain;
+      if (b.dataset.step) R.chance = Math.max(10, Math.min(100, R.chance + 10 * Number(b.dataset.step)));
+      else R.boots = b.dataset.v;
+      return draw();
+    }
     if (b.classList.contains('add')) { s.kids.push(newKid(s.kids.length)); return draw(); }
     if (b.dataset.remove != null) { s.kids.splice(+b.dataset.remove, 1); return draw(); }
     if (b.dataset.loc) {
@@ -146,16 +195,6 @@ export function openSettings(current, onSave) {
 
   dlg.addEventListener('change', (e) => {
     const el = e.target;
-    if (el.dataset.lv != null) {
-      const lvl = s.rules.levels[+el.dataset.lv], lf = el.dataset.lf;
-      lvl[lf] = el.type === 'checkbox' ? el.checked : lf === 'max' ? Number(el.value) : el.value;
-      if (lf === 'max') { // the next row's range label follows
-        const next = dlg.querySelectorAll('.rules td.rng bdi')[+el.dataset.lv];
-        if (next) next.textContent = `${lvl.max}°`;
-      }
-      return;
-    }
-    if (el.dataset.rain) { s.rules.rain[el.dataset.rain] = el.dataset.rain === 'boots' ? el.value : Number(el.value); return; }
     const f = el.dataset.f;
     if (!f) return;
     if (el.dataset.k != null) {
@@ -182,6 +221,12 @@ export function openSettings(current, onSave) {
     close();
     onSave(s);
   });
+
+  // keep a freshly opened level in view (the footer covers the bottom)
+  function revealOpen() {
+    const el = dlg.querySelector('.lv.open');
+    if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
 
   async function doSearch() {
     const q = dlg.querySelector('#cityq').value.trim();
