@@ -282,6 +282,8 @@ body.night::after {
 .panel {
   width: min(960px, 94vw);
   max-height: 94vh;
+  max-height: 94dvh;
+  overscroll-behavior: contain;
   overflow: auto;
   background: #fffdf8;
   border-radius: 24px;
@@ -323,8 +325,10 @@ legend { font-weight: 700; padding: 0 6px; }
 .save { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; font-weight: 700; flex: 1; }
 
 /* ---------- narrow screens (phones): let the page scroll, stack kids ---------- */
-@media (max-width: 700px) {
-  html, body { overflow: auto; }
+@media (max-width: 700px), (max-height: 500px) {
+  /* let the document itself scroll (not the body), like a normal page */
+  html { height: auto; overflow: auto; }
+  body { height: auto; min-height: 100%; overflow: visible; }
   #app { height: auto; min-height: 100%; gap: 10px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
   .top { height: 44px; }
   .day-badge { font-size: 18px; }
@@ -358,7 +362,7 @@ legend { font-weight: 700; padding: 0 6px; }
 .rules th.lvl { text-align: start; font-weight: 700; white-space: nowrap; }
 .rules td.rng { white-space: nowrap; }
 .panel .rules input[type=number] { width: 58px; padding: 4px 6px; }
-.panel .rules select { font-size: 15px; padding: 4px 6px; }
+.panel .rules select { font-size: 16px; padding: 4px 6px; }
 .rules input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--accent); }
 .panel label > span { display: inline-flex; align-items: center; gap: 6px; }
 .panel label > span input[type=number] { width: 72px; }
@@ -391,7 +395,7 @@ legend { font-weight: 700; padding: 0 6px; }
 
 
 
-@media (max-width: 700px) {
+@media (max-width: 700px), (max-height: 500px) {
   .bag-arrow { transform: rotate(90deg); } /* the bag row runs sideways on phones */
   .items { gap: 4px; }
   .items .card { flex: 1 1 0; min-width: 0; max-width: 76px; }
@@ -412,3 +416,46 @@ legend { font-weight: 700; padding: 0 6px; }
   border-bottom: 3px solid transparent;
 }
 .panel .tab.on { color: var(--ink); border-bottom-color: var(--accent); background: #fff6ea; }
+
+/* rules table: keep the level names visible while scrolling sideways */
+.rules th.lvl, .rules thead th:first-child {
+  position: sticky;
+  inset-inline-start: 0;
+  background: #fffdf8;
+  z-index: 1;
+  box-shadow: -6px 0 6px -6px rgba(61,43,31,.25);
+}
+
+/* ---------- phones: fixes from the phone review ---------- */
+@media (max-width: 700px), (max-height: 500px) {
+  #app { padding-bottom: max(1.6vh, env(safe-area-inset-bottom, 0px)); }
+
+  /* kid editor: stack the preview above the fields so nothing runs off-screen */
+  .kid-edit { flex-direction: column; align-items: center; gap: 4px; }
+  .kid-prev { width: 80px; }
+  .kid-fields { width: 100%; min-width: 0; }
+  .panel .kid-fields input:not([type=number]) { flex: 1 1 0; min-width: 0; width: auto; }
+
+  /* clothing cards wrap into rows of four instead of squashing */
+  .items { flex-wrap: wrap; }
+  .items .card, .kids-3 .items .card { flex: 0 0 calc(25% - 4px); max-width: 110px; }
+
+  /* header: keep the menu button on screen */
+  .tomorrow .day-badge { font-size: 20px; }
+  .where { min-width: 0; }
+  .day-badge { flex: none; }
+  .top { gap: 10px; }
+  .where { flex: 1 1 0; justify-content: flex-end; }
+  .where span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gear { flex: none; }
+
+  /* kids stand on the same ground line; scene fills the card */
+  .figs { align-items: flex-end; }
+  .scene-body { flex: 1 0 auto; justify-content: center; }
+
+  /* comfortable touch targets in settings */
+  .panel input:not([type=checkbox]), .panel select, .panel button:not(.sw) { min-height: 44px; }
+  .sw { width: 40px; height: 40px; }
+  .panel .row { gap: 10px; }
+  .rules { min-width: 600px; }
+}

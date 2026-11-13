@@ -91,7 +91,7 @@ export function openSettings(current, onSave) {
         ${L.mode === 'auto'
           ? ''
           : `<div class="hint">נבחר: <b>${esc(L.name)}</b></div>
-             <div class="row"><input id="cityq" placeholder="חיפוש עיר…"><button type="button" id="citygo">חיפוש</button></div>
+             <div class="row"><input id="cityq" type="search" enterkeyhint="search" autocomplete="off" placeholder="חיפוש עיר…"><button type="button" id="citygo">חיפוש</button></div>
              <div id="cityres"></div>`}
       </fieldset>
       <fieldset><legend>שעות</legend>
