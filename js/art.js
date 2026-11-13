@@ -11,7 +11,7 @@ export const SHIRT_COLORS = ['#ffcf3f', '#ff8fb1', '#7ec8e3', '#9ad97a', '#c79bf
 
 export const COLORS = {
   sweatshirt: '#f08a4b',
-  coat: '#4f86d9',
+  coat: '#7b5cd6',
   pants: '#4a6fa5',
   shorts: '#5fae6e',
   sneakers: '#e5534b',
@@ -59,8 +59,9 @@ const LEG_R = [132, 262, 135, 366];
 
 const TORSO = {
   shirt: 'M84,168 Q86,152 106,148 L134,148 Q154,152 156,168 L152,270 Q120,278 88,270 Z',
-  sweatshirt: 'M81,168 Q83,148 104,144 L136,144 Q157,148 159,168 L156,282 Q120,292 84,282 Z',
-  coat: 'M77,168 Q79,145 102,140 L138,140 Q161,145 163,168 L163,302 Q120,312 77,302 Z',
+  sweatshirt: 'M78,166 Q80,146 104,142 L136,142 Q160,146 162,166 L160,280 L80,280 Z',
+  // puffer: much wider than the body, scalloped sides, reaches mid-thigh
+  coat: 'M84,150 Q100,140 120,142 Q140,140 156,150 Q176,158 174,172 Q184,190 174,208 Q184,226 174,244 Q184,262 174,280 Q184,298 172,318 Q146,330 120,327 Q94,330 68,318 Q56,298 66,280 Q56,262 66,244 Q56,226 66,208 Q56,190 66,172 Q64,158 84,150 Z',
 };
 
 function drawShoes(kind, skin) {
@@ -81,6 +82,7 @@ function drawShoes(kind, skin) {
       s += shape(`M${x - 15},${y - 46} L${x + 15},${y - 46} L${x + 15},${y - 6} Q${x + 15 + flip * 6},${y - 4} ${x + 18 * 1},${y + 6} L${x + 18},${y + 9} L${x - 18},${y + 9} L${x - 18},${y + 6} Q${x - 18},${y - 4} ${x - 15},${y - 8} Z`, c);
       s += shape(`M${x - 20},${y + 6} L${x + 20},${y + 6} L${x + 20},${y + 13} L${x - 20},${y + 13} Z`, '#5a4636');
       s += line(`M${x - 15},${y - 38} L${x + 15},${y - 38}`, shade(c, -0.15), 4);
+      s += line(`M${x - 8},${y - 30} L${x - 8},${y - 10}`, '#fff8d6', 4, 'opacity="0.8"');
     }
   }
   return s;
@@ -175,32 +177,46 @@ function drawTop(kind, color, look) {
 
 function drawSweatshirt() {
   const c = COLORS.sweatshirt;
+  let ticks = '';
+  for (let x = 86; x <= 154; x += 8) ticks += `M${x},282 L${x},292 `;
   return shape(TORSO.sweatshirt, c) +
-    line('M86,270 Q120,280 154,270', shade(c, -0.15), 4) +
-    shape('M100,232 L140,232 L146,262 L94,262 Z', shade(c, -0.08)) +
-    // hood lying on the shoulders (the head is drawn over its top)
-    shape('M80,160 Q72,116 100,108 L140,108 Q168,116 160,160 Q120,180 80,160 Z', c) +
-    shape('M92,158 Q88,126 104,122 L136,122 Q152,126 148,158 Q120,170 92,158 Z', shade(c, -0.18)) +
+    // ribbed hem band
+    shape('M80,278 L160,278 L158,294 Q120,300 82,294 Z', shade(c, -0.15)) + line(ticks, shade(c, -0.3), 2) +
+    // big kangaroo pocket
+    shape('M96,226 L144,226 L152,266 L88,266 Z', shade(c, -0.08)) +
+    // oversized hood: sticks out on both sides of the head (head is drawn over its middle)
+    shape('M64,170 Q44,100 100,90 L140,90 Q196,100 176,170 Q120,192 64,170 Z', c) +
+    shape('M82,164 Q72,114 104,106 L136,106 Q168,114 158,164 Q120,180 82,164 Z', shade(c, -0.18)) +
     // drawstrings
-    line('M112,166 L109,200 M128,166 L131,200', '#ffffff', 4) +
-    `<circle cx="109" cy="202" r="3.5" fill="#ffffff" stroke="${O}" stroke-width="2"/><circle cx="131" cy="202" r="3.5" fill="#ffffff" stroke="${O}" stroke-width="2"/>`;
+    line('M112,168 L109,202 M128,168 L131,202', '#ffffff', 4) +
+    `<circle cx="109" cy="204" r="3.5" fill="#ffffff" stroke="${O}" stroke-width="2"/><circle cx="131" cy="204" r="3.5" fill="#ffffff" stroke="${O}" stroke-width="2"/>`;
 }
 
 function drawCoat() {
   const c = COLORS.coat;
-  return shape(TORSO.coat, c) +
-    line('M120,150 L120,306', shade(c, -0.25), 3.5) +
-    shape('M86,250 L108,250 L108,262 L86,262 Z', shade(c, -0.1)) +
-    shape('M132,250 L154,250 L154,262 L132,262 Z', shade(c, -0.1)) +
-    shape('M96,138 Q120,158 144,138 L148,150 Q120,170 92,150 Z', '#f3efe6');
+  let s = shape(TORSO.coat, c);
+  // puffy bands: highlight arc at the top of each band, seam at the bottom
+  for (const y of [184, 220, 256, 292]) s += line(`M${80},${y} Q120,${y - 8} ${160},${y}`, shade(c, 0.28), 5, 'opacity="0.7"');
+  for (const y of [208, 244, 280]) s += line(`M68,${y} Q120,${y + 10} 172,${y}`, shade(c, -0.22), 3);
+  s += line('M120,152 L120,326', shade(c, -0.32), 3);
+  s += shape('M115,176 L125,176 L125,190 L115,190 Z', '#e9e4ff');
+  s += shape('M80,262 L106,262 L106,274 L80,274 Z', shade(c, -0.1));
+  s += shape('M134,262 L160,262 L160,274 L134,274 Z', shade(c, -0.1));
+  // fur collar
+  for (let x = 88; x <= 152; x += 8) {
+    const t = (x - 120) / 32;
+    s += `<circle cx="${x}" cy="${(140 + 12 * (1 - t * t)).toFixed(1)}" r="9" fill="#f7f3ea" stroke="${O}" stroke-width="2.5"/>`;
+  }
+  return s;
 }
 
 function drawScarf() {
   const c = COLORS.scarf;
-  return shape('M128,150 L138,196 L124,198 L116,156 Z', c) +
-    line('M124,180 L136,178 M126,188 L137,186', '#ffffff', 2.5) +
-    shape('M98,142 Q120,156 142,142 L144,156 Q120,172 96,156 Z', c) +
-    line('M104,150 L106,160 M116,154 L117,165 M128,154 L127,165 M138,150 L136,160', '#ffffff', 2.5);
+  return shape('M130,156 L146,232 L128,236 L118,160 Z', c) +
+    line('M124,196 L141,193 M126,210 L143,207', '#ffffff', 3) +
+    line('M131,237 L130,246 M137,236 L137,245 M143,234 L144,243', c, 3) +
+    shape('M92,138 Q120,156 148,138 L150,160 Q120,180 90,160 Z', c) +
+    line('M100,148 L101,164 M113,153 L113,170 M127,153 L127,170 M140,148 L139,164', '#ffffff', 3);
 }
 
 function drawBeanie() {
@@ -213,14 +229,14 @@ function drawBeanie() {
 
 function drawCap() {
   const c = COLORS.cap;
-  return shape('M68,82 Q70,32 120,30 Q170,32 172,82 Z', c) +
-    shape('M60,82 Q120,70 180,82 Q186,94 160,96 Q120,90 80,96 Q54,94 60,82 Z', shade(c, -0.12)) +
+  return shape('M136,76 Q196,70 208,86 Q194,98 136,90 Z', shade(c, -0.12)) +
+    shape('M68,84 Q70,32 120,30 Q170,32 172,84 Q120,76 68,84 Z', c) +
     `<circle cx="120" cy="30" r="5" fill="${shade(c, -0.2)}" stroke="${O}" stroke-width="2"/>`;
 }
 
-function drawUmbrellaShaft() {
-  return line('M178,-22 L170,276', O, 7) + line('M178,-22 L170,276', '#8a6a4f', 3.5) +
-    line('M170,276 Q170,290 158,288', O, 6) + line('M170,276 Q170,290 158,288', '#8a6a4f', 3);
+function drawUmbrellaShaft(hx = 170) {
+  return line(`M178,-22 L${hx},276`, O, 7) + line(`M178,-22 L${hx},276`, '#8a6a4f', 3.5) +
+    line(`M${hx},276 Q${hx},290 ${hx - 12},288`, O, 6) + line(`M${hx},276 Q${hx},290 ${hx - 12},288`, '#8a6a4f', 3);
 }
 
 function drawUmbrellaCanopy() {
@@ -258,32 +274,51 @@ export function drawKid(child, outfit, opts = {}) {
   s += `<ellipse cx="120" cy="394" rx="78" ry="10" fill="#000" opacity="0.08"/>`;
   if (opts.bottle) s += drawBottle();
 
-  if (has('umbrella')) s += drawUmbrellaShaft();
+  // puffy coat sleeves can't hang straight: splay the arms a little
+  const spread = has('coat') ? 20 : 0;
+  const arms = [[ARM_L[0], ARM_L[1], ARM_L[2] - spread, ARM_L[3]], [ARM_R[0], ARM_R[1], ARM_R[2] + spread, ARM_R[3]]];
+  if (has('umbrella')) s += drawUmbrellaShaft(arms[1][2]);
   const style = hairStyleOf(child);
   s += backHair(style, hair);
 
   // legs + bottoms
   s += limb(...LEG_L, 24, skin) + limb(...LEG_R, 24, skin);
   const bc = outfit.bottom === 'shorts' ? COLORS.shorts : COLORS.pants;
-  const bf = outfit.bottom === 'shorts' ? 0.38 : 0.94;
-  s += partial(...LEG_L, bf, 30, bc) + partial(...LEG_R, bf, 30, bc);
+  const shorts = outfit.bottom === 'shorts';
+  const bf = shorts ? 0.38 : 0.94;
+  const bw = shorts ? 36 : 30;
+  s += partial(...LEG_L, bf, bw, bc) + partial(...LEG_R, bf, bw, bc);
+  if (shorts) s += line('M90,304 L122,304 M118,304 L150,304', shade(bc, -0.25), 4);
   s += shape('M88,252 L152,252 L154,286 Q120,292 86,286 Z', bc);
   s += line('M120,262 L120,290', shade(bc, -0.2), 3);
   s += drawShoes(outfit.shoes, skin);
 
   // arms: skin, then sleeves from inner to outer layer
-  for (const arm of [ARM_L, ARM_R]) {
+  const seg = (arm, f0, f1, w, c) => {
+    const [x1, y1, x2, y2] = arm;
+    return limb(lerp(x1, x2, f0), lerp(y1, y2, f0), lerp(x1, x2, f1), lerp(y1, y2, f1), w, c);
+  };
+  arms.forEach((arm, side) => {
     s += limb(...arm, 20, skin);
-    s += partial(...arm, outfit.shirt === 'tee' ? 0.3 : 0.86, 22, shirtColor);
-    if (has('sweatshirt')) s += partial(...arm, 0.88, 25, COLORS.sweatshirt);
-    if (has('coat')) s += partial(...arm, 0.9, 29, COLORS.coat);
+    s += partial(...arm, outfit.shirt === 'tee' ? 0.3 : 0.86, 21, shirtColor);
+    if (has('sweatshirt')) {
+      s += partial(...arm, 0.8, 28, COLORS.sweatshirt);
+      s += seg(arm, 0.78, 0.88, 31, shade(COLORS.sweatshirt, -0.15)); // ribbed cuff
+    }
+    if (has('coat')) {
+      // stacked round segments → puffy "sausage" sleeve
+      for (const [f0, f1] of [[0, 0.36], [0.3, 0.64], [0.58, 0.9]]) s += seg(arm, f0, f1, 40, COLORS.coat);
+    }
     const [, , hx, hy] = arm;
     if (has('gloves')) {
-      s += `<circle cx="${hx}" cy="${hy + 2}" r="14" fill="${COLORS.gloves}" stroke="${O}" stroke-width="${SW}"/>`;
+      const tx = side === 0 ? hx + 12 : hx - 12;
+      s += `<ellipse cx="${tx}" cy="${hy - 2}" rx="7" ry="8" fill="${COLORS.gloves}" stroke="${O}" stroke-width="${SW}"/>`;
+      s += `<ellipse cx="${hx}" cy="${hy + 4}" rx="14" ry="17" fill="${COLORS.gloves}" stroke="${O}" stroke-width="${SW}"/>`;
+      s += shape(`M${hx - 14},${hy - 12} L${hx + 14},${hy - 12} L${hx + 14},${hy - 4} L${hx - 14},${hy - 4} Z`, '#ffffff');
     } else {
       s += `<circle cx="${hx}" cy="${hy + 2}" r="11.5" fill="${skin}" stroke="${O}" stroke-width="${SW}"/>`;
     }
-  }
+  });
 
   // neck + torso layers
   s += shape('M109,128 L131,128 L131,160 L109,160 Z', skin);
@@ -322,15 +357,27 @@ const ICONS = {
   longsleeve: (c) => shape('M32,18 L42,14 Q50,24 58,14 L68,18 L86,66 L75,70 L67,42 L67,88 L33,88 L33,42 L25,70 L14,66 Z', c) +
     line('M35,50 L65,50 M35,62 L65,62 M35,74 L65,74', shade(c, 0.22), 5) +
     `<path d="M32,18 L42,14 Q50,24 58,14 L68,18 L86,66 L75,70 L67,42 L67,88 L33,88 L33,42 L25,70 L14,66 Z" fill="none" stroke="${O}" stroke-width="${SW}" stroke-linejoin="round"/>`,
-  sweatshirt: () => shape('M33,24 Q30,2 50,2 Q70,2 67,24 Q50,34 33,24 Z', COLORS.sweatshirt) +
-    shape('M38,22 Q37,8 50,8 Q63,8 62,22 Q50,28 38,22 Z', shade(COLORS.sweatshirt, -0.2)) +
-    shape('M30,18 L42,13 Q50,22 58,13 L70,18 L88,68 L76,72 L68,44 L68,88 L32,88 L32,44 L24,72 L12,68 Z', COLORS.sweatshirt) +
-    shape('M38,60 L62,60 L65,78 L35,78 Z', shade(COLORS.sweatshirt, -0.08)) +
-    line('M33,82 L67,82', shade(COLORS.sweatshirt, -0.15), 4) +
-    line('M45,24 L44,44 M55,24 L56,44', '#ffffff', 3),
-  coat: () => shape('M28,16 L42,10 Q50,20 58,10 L72,16 L90,72 L77,76 L70,46 L72,94 L28,94 L30,46 L23,76 L10,72 Z', COLORS.coat) +
-    line('M50,18 L50,94', shade(COLORS.coat, -0.25), 3) +
-    shape('M36,10 Q50,26 64,10 L66,18 Q50,34 34,18 Z', '#f3efe6'),
+  sweatshirt: () => shape('M30,26 Q24,2 50,2 Q76,2 70,26 Q50,36 30,26 Z', COLORS.sweatshirt) +
+    shape('M37,23 Q35,9 50,9 Q65,9 63,23 Q50,30 37,23 Z', shade(COLORS.sweatshirt, -0.2)) +
+    shape('M29,18 L42,13 Q50,22 58,13 L71,18 L88,66 L76,70 L69,44 L69,84 L31,84 L31,44 L24,70 L12,66 Z', COLORS.sweatshirt) +
+    shape('M31,82 L69,82 L69,92 L31,92 Z', shade(COLORS.sweatshirt, -0.15)) +
+    shape('M76,68 L88,64 L91,73 L79,77 Z', shade(COLORS.sweatshirt, -0.15)) +
+    shape('M24,68 L12,64 L9,73 L21,77 Z', shade(COLORS.sweatshirt, -0.15)) +
+    shape('M38,58 L62,58 L65,76 L35,76 Z', shade(COLORS.sweatshirt, -0.08)) +
+    line('M45,26 L44,44 M55,26 L56,44', '#ffffff', 3),
+  coat: () => {
+    const c = COLORS.coat;
+    let s = '';
+    for (const [x1, x2] of [[26, 13], [74, 87]]) {
+      s += limb(x1, 24, lerp(x1, x2, 0.5), 50, 17, c) + limb(lerp(x1, x2, 0.45), 46, x2, 76, 17, c);
+    }
+    s += shape('M30,12 Q50,20 70,12 Q84,14 81,28 Q88,38 81,48 Q88,58 81,68 Q88,80 80,92 Q50,100 20,92 Q12,80 19,68 Q12,58 19,48 Q12,38 19,28 Q16,14 30,12 Z', c);
+    for (const y of [40, 60, 79]) s += line(`M19,${y} Q50,${y + 6} 81,${y}`, shade(c, -0.22), 2.5);
+    for (const y of [26, 46, 66]) s += line(`M28,${y} Q50,${y - 4} 72,${y}`, shade(c, 0.28), 3.5, 'opacity="0.7"');
+    s += line('M50,18 L50,96', shade(c, -0.32), 2.5);
+    for (let x = 34; x <= 66; x += 8) s += `<circle cx="${x}" cy="${(12 + 7 * (1 - ((x - 50) / 16) ** 2)).toFixed(1)}" r="6" fill="#f7f3ea" stroke="${O}" stroke-width="2"/>`;
+    return s;
+  },
   shorts: () => shape('M26,28 L74,28 L79,70 L55,70 L50,48 L45,70 L21,70 Z', COLORS.shorts),
   pants: () => shape('M30,10 L70,10 L75,92 L56,92 L50,38 L44,92 L25,92 Z', COLORS.pants) +
     line('M30,20 L70,20', shade(COLORS.pants, -0.2), 3),
@@ -340,7 +387,8 @@ const ICONS = {
   sandals: () => shape('M10,70 Q10,62 20,62 L82,62 Q92,62 92,70 Q92,78 82,78 L20,78 Q10,78 10,70 Z', COLORS.sandals) +
     line('M30,62 Q40,40 54,62 M58,62 Q68,46 78,62', shade(COLORS.sandals, -0.15), 6),
   boots: () => shape('M28,12 L58,12 L58,58 Q82,60 86,74 L86,86 L28,86 Z', COLORS.boots) +
-    shape('M26,84 L88,84 L88,92 L26,92 Z', '#5a4636') + line('M28,24 L58,24', shade(COLORS.boots, -0.15), 4),
+    shape('M26,84 L88,84 L88,92 L26,92 Z', '#5a4636') + line('M28,24 L58,24', shade(COLORS.boots, -0.15), 4) +
+    line('M37,32 L37,70', '#fff8d6', 5, 'opacity="0.8"'),
   umbrella: () => line('M50,22 L50,80 Q50,90 40,88', O, 6) + line('M50,22 L50,80 Q50,90 40,88', '#8a6a4f', 3) +
     shape('M8,52 Q50,-6 92,52 Q81,44 71,52 Q60,44 50,52 Q40,44 29,52 Q19,44 8,52 Z', COLORS.umbrella),
   beanie: () => shape('M18,70 Q16,20 50,18 Q84,20 82,70 Z', COLORS.beanie) +
@@ -351,9 +399,11 @@ const ICONS = {
     shape('M20,80 L56,80 L56,92 L20,92 Z', '#fff'),
   scarf: () => shape('M14,30 Q50,46 86,30 L88,46 Q50,62 12,46 Z', COLORS.scarf) +
     shape('M58,50 L68,90 L54,92 L46,54 Z', COLORS.scarf) +
-    line('M24,38 L24,50 M40,42 L40,54 M60,42 L60,54 M76,38 L76,50', '#fff', 3),
-  cap: () => shape('M22,62 Q22,22 52,20 Q82,22 82,62 Z', COLORS.cap) +
-    shape('M14,62 L92,62 Q98,72 86,74 L20,74 Q8,72 14,62 Z', shade(COLORS.cap, -0.12)),
+    line('M24,38 L24,50 M40,42 L40,54 M60,42 L60,54 M76,38 L76,50', '#fff', 3) +
+    line('M56,93 L55,99 M61,92 L61,99 M66,91 L67,98', COLORS.scarf, 3),
+  cap: () => shape('M56,56 Q90,52 97,64 Q88,74 56,68 Z', shade(COLORS.cap, -0.12)) +
+    shape('M10,64 Q12,22 44,20 Q76,22 78,64 Q44,58 10,64 Z', COLORS.cap) +
+    `<circle cx="44" cy="20" r="4" fill="${shade(COLORS.cap, -0.2)}" stroke="${O}" stroke-width="2"/>`,
   bottle: () => shape('M38,24 L62,24 L66,36 L66,88 Q66,92 62,92 L38,92 Q34,92 34,88 L34,36 Z', '#dff3fb') +
     shape('M35,54 L65,54 L65,88 Q65,91 62,91 L38,91 Q35,91 35,88 Z', COLORS.bottle, 'stroke-width="0"') +
     `<path d="M38,24 L62,24 L66,36 L66,88 Q66,92 62,92 L38,92 Q34,92 34,88 L34,36 Z" fill="none" stroke="${O}" stroke-width="${SW}" stroke-linejoin="round"/>` +
