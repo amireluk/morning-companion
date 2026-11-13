@@ -101,15 +101,15 @@ function render() {
     body = timeline(win, readers) + alertsRow(win, key) +
       scene(kids, planOutfit(win, 0, settings.rules), tomorrow);
   }
-  app.innerHTML = header(tomorrow, date, readers) + body;
+  app.innerHTML = header(tomorrow, date) + body;
   bindGear();
 }
 
-function header(tomorrow, date, readers) {
-  const badge = tomorrow
-    ? `<div class="day-badge moon">${weatherIcon('sunrise')}${readers ? `<span>מחר · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`
-    : `<div class="day-badge">${weatherIcon('clear')}${readers ? `<span>היום · יום ${DAYS[date.getDay()]}</span>` : ''}</div>`;
-  // the city name comes from a separate service; if it's unavailable, still say where
+function header(tomorrow, date) {
+  // the app's name is the question it answers; in the evening it's about tomorrow
+  const badge = `<div class="day-badge${tomorrow ? ' moon' : ''}">${weatherIcon(tomorrow ? 'sunrise' : 'clear')}` +
+    `<div class="titles"><h1 class="app-title">${tomorrow ? 'מה לובשים מחר?' : 'מה לובשים היום?'}</h1>` +
+    `<span class="day-sub">${tomorrow ? 'מחר, ' : ''}יום ${DAYS[date.getDay()]}</span></div></div>`;
   const locName = DEMO ? `דמו: ${DEMO}` : state.loc?.name || (state.loc ? (state.loc.source === 'default' ? 'תל אביב' : 'המיקום שלך') : '');
   const stale = state.forecast?.stale || state.error ? '<i class="stale" title="אין חיבור – מציג נתונים שמורים"></i>' : '';
   return `<header class="top">${badge}<div class="where">${stale}<span>${esc(locName)}</span><button class="gear" aria-label="הגדרות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></header>`;

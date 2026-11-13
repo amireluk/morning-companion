@@ -80,7 +80,15 @@ export function computeAlerts(win, rules, base = null) {
   const swing = st.warmest && (base ? st.rise - base.rise >= A.swingBy && st.rise >= A.swingMin : st.rise >= A.absSwing);
   if (hot) add(5, 'clear', `חם במיוחד${base ? ' לעומת הימים האחרונים' : ''} – מרגיש כמו ${Math.round(st.peak)}°, לשתות הרבה`);
   if (cold) add(5, 'snow', `קר במיוחד${base ? ' לעומת הימים האחרונים' : ''} – מרגיש כמו ${Math.round(st.low)}°`);
-  if (swing) {
+  // a morning that needs a warm layer and a later part warm enough for a
+  // cap: easy to dress wrong, so always worth a note (not only when unusual)
+  const amLv = rules.levels[levelIndex(st.am, rules)];
+  const hotLv = st.warmest && rules.levels[levelIndex(st.warmest.feels, rules)];
+  const coldToHot = hotLv && (amLv.sweatshirt || amLv.coat) && hotLv.cap;
+  if (coldToHot) {
+    const w = st.warmest;
+    add(6, 'partly', `בבוקר ${word(st.am, rules)} (${Math.round(st.am)}°) – ${amLv.coat ? 'מעיל' : 'סווטשירט'}, ${later(w.hour)} ${word(w.feels, rules)} (${Math.round(w.feels)}°) – כובע`);
+  } else if (swing) {
     const w = st.warmest;
     const sun = maxUv >= A.strongUv ? ' ושמש חזקה' : '';
     add(6, 'partly', `בבוקר ${word(st.am, rules)} (${Math.round(st.am)}°), ${later(w.hour)} ${word(w.feels, rules)} (${Math.round(w.feels)}°)${sun}`);

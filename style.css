@@ -503,3 +503,15 @@ legend { font-weight: 700; padding: 0 6px; }
   .alerts-title { width: 100%; font-size: 16px; }
   .alert { font-size: 14px; }
 }
+
+/* header: the app's name with the weekday under it */
+.titles { display: flex; flex-direction: column; justify-content: center; line-height: 1.05; min-width: 0; }
+.app-title { margin: 0; font-size: clamp(20px, 3.6vh, 38px); font-weight: 700; white-space: nowrap; }
+.day-sub { font-size: clamp(12px, 1.9vh, 20px); font-weight: 500; color: var(--muted); }
+.tomorrow .day-sub { color: #c7c9ec; }
+.tomorrow .day-badge { font-size: inherit; }
+@media (max-width: 700px), (max-height: 500px) {
+  .app-title { font-size: 19px; }
+  .day-sub { font-size: 12px; }
+  .tomorrow .day-badge { font-size: inherit; }
+}
