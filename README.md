@@ -32,7 +32,8 @@
 אפשר להוסיף `&hour=19` כדי לראות את תצוגת "מחר".
 
 ## התקנה על טאבלט אנדרואיד
-1. לפרסם ב־GitHub Pages: ‏Settings → Pages → Deploy from a branch → לבחור את הענף ואת `/ (root)`.
+1. האתר נבנה מ־`main` דרך GitHub Pages ‏(Settings → Pages → Deploy from a branch → `main`, `/ (root)`):
+   https://amireluk.github.io/morning-companion/ (הדמו: `demo.html`). עבודה נעשית בענפים ונכנסת ל־`main` כשהיא מוכנה.
 2. לפתוח את הכתובת ב־Chrome בטאבלט → תפריט ⋮ → **הוספה למסך הבית / התקנת אפליקציה**.
 3. לאשר הרשאת מיקום.
 4. מומלץ: להשאיר בטעינה, ובאפשרויות מפתחים להפעיל "Stay awake" (המסך לא נכבה בזמן טעינה).
