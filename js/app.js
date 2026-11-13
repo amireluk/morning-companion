@@ -1,5 +1,5 @@
 import { drawKid, itemIcon, weatherIcon } from './art.js';
-import { planOutfit, phasesOf, isRainy } from './outfit.js';
+import { planOutfit, phasesOf, isRainy, levelIndex, LEVEL_NAMES } from './outfit.js';
 import { resolveLocation, fetchForecast, dateKey, iconKind, demoDay } from './weather.js';
 import { load, save, isReader } from './store.js';
 import { openSettings } from './settings.js';
@@ -49,15 +49,8 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 
 const PHASES = ['בוקר', 'צהריים', 'ערב'];
 
-// a word for how it feels outside, from the feels-like temperature
-function feelWord(t) {
-  if (t < 7) return 'קר מאוד';
-  if (t < 12) return 'קר';
-  if (t < 17) return 'קריר';
-  if (t < 22) return 'נעים';
-  if (t < 28) return 'חם';
-  return 'חם מאוד';
-}
+// a word for how it feels outside (the level names from the rules table)
+const feelWord = (t) => LEVEL_NAMES[levelIndex(t, settings.rules)];
 
 // ---------- data ----------
 async function refresh() {
@@ -100,7 +93,7 @@ function render() {
   } else {
     const win = day.filter((h) => h.hour >= settings.leaveHour && h.hour <= settings.returnHour);
     body = timeline(win, readers) +
-      `<main class="kids kids-${kids.length}">${kids.map((k) => kidCard(k, planOutfit(win, k.offset || 0))).join('')}</main>`;
+      `<main class="kids kids-${kids.length}">${kids.map((k) => kidCard(k, planOutfit(win, k.offset || 0, settings.rules))).join('')}</main>`;
   }
   app.innerHTML = header(tomorrow, date, readers) + body;
   bindGear();
@@ -118,7 +111,7 @@ function header(tomorrow, date, readers) {
 // Three tiles: morning / noon / evening of the hours the kids are out.
 function timeline(win, readers) {
   const tiles = phasesOf(win).map((ph, i) => {
-    const rainy = ph.filter(isRainy);
+    const rainy = ph.filter((x) => isRainy(x, settings.rules));
     const h = rainy.length ? rainy.reduce((a, b) => (b.precip > a.precip ? b : a)) : ph[Math.floor(ph.length / 2)];
     let kind = iconKind(h);
     if (rainy.length && !['rain', 'drizzle', 'storm', 'snow'].includes(kind)) kind = 'rain';

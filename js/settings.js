@@ -1,6 +1,7 @@
 import { searchCity, TEL_AVIV } from './weather.js';
 import { newKid } from './store.js';
-import { SKINS, HAIRS, SHIRT_COLORS, drawKid, hairStyleOf } from './art.js';
+import { SKINS, HAIRS, SHIRT_COLORS, drawKid, hairStyleOf, itemIcon } from './art.js';
+import { LEVEL_NAMES, defaultRules, normalizeRules } from './outfit.js';
 
 const hourOpts = (sel, from, to) => {
   let s = '';
@@ -13,6 +14,7 @@ const OFFSETS = [[-4, 'תמיד קר לו ❄️❄️'], [-2, 'קצת קר לו
 
 export function openSettings(current, onSave) {
   const s = structuredClone(current);
+  s.rules = normalizeRules(s.rules);
   const dlg = document.createElement('div');
   dlg.className = 'settings';
   document.body.appendChild(dlg);
@@ -43,6 +45,36 @@ export function openSettings(current, onSave) {
       </div></div>`;
   }
 
+  // the editable "temperatures and clothes" table
+  function rulesHtml() {
+    const R = s.rules, last = R.levels.length - 1;
+    const sel = (i, f, opts, v) => `<select data-lv="${i}" data-lf="${f}">${opts.map(([o, t]) => `<option value="${o}"${o === v ? ' selected' : ''}>${t}</option>`).join('')}</select>`;
+    const chk = (i, f, v) => `<input type="checkbox" data-lv="${i}" data-lf="${f}"${v ? ' checked' : ''}>`;
+    const head = (icon, t) => `<th><span class="th-ic">${itemIcon(icon, '#7ec8e3')}</span>${t}</th>`;
+    const rows = R.levels.map((l, i) => {
+      const lo = i === 0 ? null : R.levels[i - 1].max;
+      const range = i === last
+        ? `מ־<bdi dir="ltr">${lo}°</bdi>`
+        : `${i === 0 ? 'מתחת ל־' : `<bdi dir="ltr">${lo}°</bdi> עד`} <input type="number" data-lv="${i}" data-lf="max" value="${l.max}">°`;
+      return `<tr><th class="lvl">${LEVEL_NAMES[i]}</th><td class="rng">${range}</td>` +
+        `<td>${sel(i, 'shirt', [['long', 'ארוכה'], ['tee', 'קצרה']], l.shirt)}</td>` +
+        `<td>${sel(i, 'bottom', [['pants', 'ארוך'], ['shorts', 'קצר']], l.bottom)}</td>` +
+        `<td>${sel(i, 'shoes', [['sneakers', 'נעליים'], ['sandals', 'סנדלים']], l.shoes)}</td>` +
+        `<td>${chk(i, 'sweatshirt', l.sweatshirt)}</td><td>${chk(i, 'coat', l.coat)}</td><td>${chk(i, 'winter', l.winter)}</td>` +
+        `<td>${chk(i, 'cap', l.cap)}</td></tr>`;
+    }).join('');
+    return `<fieldset><legend>טמפרטורות ובגדים</legend>
+      <div class="hint">לפי הטמפרטורה המורגשת. אפשר לשנות את הגבולות ואת מה לובשים בכל טווח.</div>
+      <div class="rules-wrap"><table class="rules">
+        <thead><tr><th>תחושה</th><th>טמפ׳</th>${head('tee', 'חולצה')}${head('pants', 'מכנס')}${head('sneakers', 'נעליים')}${head('sweatshirt', 'סווטשירט')}${head('coat', 'מעיל')}${head('beanie', 'כובע צמר, צעיף, כפפות')}${head('cap', 'כובע שמש')}</tr></thead>
+        <tbody>${rows}</tbody></table></div>
+      <div class="hint">חולצה, מכנס ונעליים נבחרים לפי השעה החמה ביום. סווטשירט, מעיל ובגדי חורף – לפי כל חלק ביום (מה שצריך רק אחר כך נכנס לתיק). מכנס קצר וסנדלים רק אם גם השעה הקרה לא דורשת סווטשירט.</div>
+      <label>מטריה כשסיכוי הגשם לפחות <span><input type="number" min="0" max="100" data-rain="chance" value="${R.rain.chance}"> %</span></label>
+      <label>מגפיים כשצפוי לפחות <span><input type="number" min="0" step="0.5" data-rain="bootsMm" value="${R.rain.bootsMm}"> מ״מ גשם ביום</span></label>
+      <button type="button" class="reset-rules">החזרת ברירת המחדל</button>
+    </fieldset>`;
+  }
+
   function draw() {
     const L = s.location;
     dlg.innerHTML = `<form class="panel">
@@ -69,6 +101,7 @@ export function openSettings(current, onSave) {
         ${s.kids.map(kidHtml).join('')}
         ${s.kids.length < 4 ? '<button type="button" class="add">+ הוספת ילד/ה</button>' : ''}
       </fieldset>
+      ${rulesHtml()}
       <div class="actions"><button type="submit" class="save">שמירה</button><button type="button" class="cancel">ביטול</button></div>
     </form>`;
   }
@@ -77,6 +110,7 @@ export function openSettings(current, onSave) {
     const b = e.target.closest('button');
     if (!b) return;
     if (b.classList.contains('cancel')) return close();
+    if (b.classList.contains('reset-rules')) { s.rules = defaultRules(); return draw(); }
     if (b.classList.contains('add')) { s.kids.push(newKid(s.kids.length)); return draw(); }
     if (b.dataset.remove != null) { s.kids.splice(+b.dataset.remove, 1); return draw(); }
     if (b.dataset.loc) {
@@ -97,7 +131,15 @@ export function openSettings(current, onSave) {
   });
 
   dlg.addEventListener('change', (e) => {
-    const el = e.target, f = el.dataset.f;
+    const el = e.target;
+    if (el.dataset.lv != null) {
+      const lvl = s.rules.levels[+el.dataset.lv], lf = el.dataset.lf;
+      lvl[lf] = el.type === 'checkbox' ? el.checked : lf === 'max' ? Number(el.value) : el.value;
+      if (lf === 'max') draw(); // the next row's range label follows
+      return;
+    }
+    if (el.dataset.rain) { s.rules.rain[el.dataset.rain] = Number(el.value); return; }
+    const f = el.dataset.f;
     if (!f) return;
     if (el.dataset.k != null) {
       const k = s.kids[+el.dataset.k];
@@ -116,6 +158,7 @@ export function openSettings(current, onSave) {
     e.preventDefault();
     dlg.querySelectorAll('input[data-f="name"]').forEach((el) => { s.kids[+el.dataset.k].name = el.value.trim(); });
     if (s.returnHour <= s.leaveHour) s.returnHour = s.leaveHour + 1;
+    s.rules = normalizeRules(s.rules);
     close();
     onSave(s);
   });

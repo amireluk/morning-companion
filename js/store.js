@@ -1,5 +1,6 @@
 import { TEL_AVIV } from './weather.js';
 import { SHIRT_COLORS } from './art.js';
+import { defaultRules, normalizeRules } from './outfit.js';
 
 const KEY = 'mc.settings';
 
@@ -26,13 +27,14 @@ export const defaults = () => ({
     { ...newKid(0), name: 'ראם', age: 8, look: 'boy', hair: 0, hairStyle: 'short', color: '#7ec8e3' },
     { ...newKid(1), name: 'סער', age: 4, look: 'boy', hair: 1, hairStyle: 'curly', color: '#ffcf3f' },
   ],
+  rules: defaultRules(),
   configured: false,
 });
 
 export function load() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY));
-    if (s && Array.isArray(s.kids)) return { ...defaults(), ...s };
+    if (s && Array.isArray(s.kids)) return { ...defaults(), ...s, rules: normalizeRules(s.rules) };
   } catch { /* ignore */ }
   return defaults();
 }
