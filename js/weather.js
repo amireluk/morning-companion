@@ -125,8 +125,12 @@ const DEMOS = {
 };
 export const DEMO_NAMES = Object.keys(DEMOS);
 
-export function demoDay(name) {
-  const d = DEMOS[name] || DEMOS.layers;
+// rain: optional override – 'none' | 'pm' (from 14:00) | 'all'
+export function demoDay(name, rain) {
+  const d = { ...(DEMOS[name] || DEMOS.layers) };
+  if (rain === 'none') { delete d.pop; delete d.rainFrom; if (d.code >= 51) d.code = 3; }
+  if (rain === 'pm') { delete d.pop; d.rainFrom = 14; if (d.code >= 51) d.code = 2; }
+  if (rain === 'all') { delete d.rainFrom; d.pop = 90; d.precip = 3; d.code = 63; }
   const hours = [];
   for (let hour = 0; hour < 24; hour++) {
     // coldest ~6:00, warmest ~14:00
