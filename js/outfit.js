@@ -7,13 +7,18 @@
 
 export const LEVEL_NAMES = ['קר מאוד', 'קר', 'קריר', 'נעים', 'חם', 'חם מאוד'];
 
+// Defaults tuned for Israel: 12° is very cold, 17° is cold, 24° is pleasant,
+// 26° is warm, 30° is hot. Bump RULES_VERSION when the defaults change so
+// browsers holding the old defaults pick up the new ones.
+const RULES_VERSION = 2;
 export const defaultRules = () => ({
+  v: RULES_VERSION,
   levels: [
-    { max: 7, shirt: 'long', bottom: 'pants', shoes: 'sneakers', sweatshirt: true, coat: true, winter: true, cap: false },
-    { max: 12, shirt: 'long', bottom: 'pants', shoes: 'sneakers', sweatshirt: true, coat: true, winter: false, cap: false },
-    { max: 17, shirt: 'long', bottom: 'pants', shoes: 'sneakers', sweatshirt: true, coat: false, winter: false, cap: false },
-    { max: 22, shirt: 'long', bottom: 'pants', shoes: 'sneakers', sweatshirt: false, coat: false, winter: false, cap: false },
-    { max: 28, shirt: 'tee', bottom: 'shorts', shoes: 'sneakers', sweatshirt: false, coat: false, winter: false, cap: true },
+    { max: 14, shirt: 'long', bottom: 'pants', shoes: 'sneakers', sweatshirt: true, coat: true, winter: true, cap: false },
+    { max: 19, shirt: 'long', bottom: 'pants', shoes: 'sneakers', sweatshirt: true, coat: true, winter: false, cap: false },
+    { max: 23, shirt: 'long', bottom: 'pants', shoes: 'sneakers', sweatshirt: true, coat: false, winter: false, cap: false },
+    { max: 26, shirt: 'tee', bottom: 'shorts', shoes: 'sneakers', sweatshirt: false, coat: false, winter: false, cap: false },
+    { max: 29, shirt: 'tee', bottom: 'shorts', shoes: 'sneakers', sweatshirt: false, coat: false, winter: false, cap: true },
     { max: null, shirt: 'tee', bottom: 'shorts', shoes: 'sandals', sweatshirt: false, coat: false, winter: false, cap: true },
   ],
   rain: { chance: 50, bootsMm: 6 },
@@ -22,14 +27,14 @@ export const defaultRules = () => ({
 // Make a stored rules object safe to use (missing fields fall back to defaults).
 export function normalizeRules(r) {
   const d = defaultRules();
-  if (!r || !Array.isArray(r.levels) || r.levels.length !== d.levels.length) return d;
+  if (!r || r.v !== d.v || !Array.isArray(r.levels) || r.levels.length !== d.levels.length) return d;
   const levels = r.levels.map((l, i) => ({ ...d.levels[i], ...l }));
   levels[levels.length - 1].max = null;
   // bounds must go up
   for (let i = 1; i < levels.length - 1; i++) {
     if (!(levels[i].max > levels[i - 1].max)) levels[i].max = levels[i - 1].max + 1;
   }
-  return { levels, rain: { ...d.rain, ...(r.rain || {}) } };
+  return { v: d.v, levels, rain: { ...d.rain, ...(r.rain || {}) } };
 }
 
 export function levelIndex(t, rules) {
