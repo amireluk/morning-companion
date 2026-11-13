@@ -95,6 +95,7 @@ export function openSettings(current, onSave) {
              <div id="cityres"></div>`}
       </fieldset>
       <fieldset><legend>שעות</legend>
+        <div class="hint">הבגדים מותאמים לשעות שהילדים מחוץ לבית. את הזמן הזה מחלקים לבוקר, צהריים ואחה״צ.</div>
         <label>יוצאים מהבית <select data-f="leaveHour">${hourOpts(s.leaveHour, 5, 12)}</select></label>
         <label>חוזרים הביתה <select data-f="returnHour">${hourOpts(s.returnHour, 10, 20)}</select></label>
         <label>מאיזו שעה להציג את מחר <select data-f="switchHour">${hourOpts(s.switchHour, 12, 23)}</select></label>

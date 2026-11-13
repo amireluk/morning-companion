@@ -326,7 +326,7 @@ legend { font-weight: 700; padding: 0 6px; }
 #cityres { display: flex; flex-direction: column; gap: 6px; }
 .city { text-align: start; }
 .city small { color: var(--muted); }
-.actions { display: flex; gap: 10px; position: sticky; bottom: -20px; background: #fffdf8; padding: 10px 0; }
+.actions { display: flex; gap: 10px; position: sticky; bottom: -20px; background: #fffdf8; padding: 10px 0; z-index: 3; box-shadow: 0 -8px 10px -6px rgba(0,0,0,.12); }
 .save { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; font-weight: 700; flex: 1; }
 
 /* ---------- narrow screens (phones): let the page scroll, stack kids ---------- */
