@@ -133,14 +133,18 @@ function kidCard(kid, plan) {
   if (!plan) return '';
   const reader = isReader(kid);
   const m = plan.morning;
-  const fig = `<div class="fig">${drawKid(kid, m, { mood: m.mood })}</div>`;
+  // size the figure by age so a 4-year-old stands shorter than an 8-year-old
+  const h = Math.max(70, Math.min(100, 70 + ((kid.age || 6) - 3) * 6));
+  const fig = `<div class="fig" style="--h:${h}">${drawKid(kid, m, { mood: m.mood })}</div>`;
+  const worn = [m.shirt, m.bottom, m.shoes, ...m.layers, ...m.acc];
+  const items = `<div class="items">${worn.map((id) => `<div class="card">${itemIcon(id, kid.color)}${reader ? `<div class="clabel">${LABELS[id] || ''}</div>` : ''}</div>`).join('')}</div>`;
   const bag = plan.bag.length
     ? `<div class="bag">${reader ? '<div class="bag-title">לשים בתיק</div>' : ''}` +
       `<div class="bag-items">${plan.bag.map((id) => `<div class="card">${itemIcon(id, kid.color)}${reader ? `<div class="clabel">${LABELS[id] || ''}</div>` : ''}</div>`).join('')}</div>` +
       `<div class="bag-arrow">⬇</div><div class="bag-icon">${itemIcon('backpack')}</div></div>`
     : '';
   const name = kid.name ? `<div class="kid-name" style="--c:${kid.color}">${esc(kid.name)}</div>` : '';
-  return `<section class="kid${bag ? ' has-bag' : ''}">${name}<div class="kid-body">${fig}${bag}</div></section>`;
+  return `<section class="kid${bag ? ' has-bag' : ''}">${name}<div class="kid-body">${fig}${bag}</div>${items}</section>`;
 }
 
 // ---------- settings access (long press on the gear) ----------

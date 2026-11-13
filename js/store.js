@@ -8,6 +8,7 @@ export const newKid = (i = 0) => ({
   name: '',
   age: 5,
   look: i % 2 ? 'girl' : 'boy',
+  hairStyle: i % 2 ? 'long' : 'short',
   skin: 0,
   hair: i % 2 ? 2 : 1,
   color: SHIRT_COLORS[i % SHIRT_COLORS.length],
@@ -22,8 +23,8 @@ export const defaults = () => ({
   nightStart: 21,
   nightEnd: 6,
   kids: [
-    { ...newKid(0), name: 'ראם', age: 8, look: 'boy', hair: 1, color: '#7ec8e3' },
-    { ...newKid(1), name: 'סער', age: 4, look: 'boy', hair: 2, color: '#ffcf3f' },
+    { ...newKid(0), name: 'ראם', age: 8, look: 'boy', hair: 0, hairStyle: 'short', color: '#7ec8e3' },
+    { ...newKid(1), name: 'סער', age: 4, look: 'boy', hair: 1, hairStyle: 'curly', color: '#ffcf3f' },
   ],
   configured: false,
 });

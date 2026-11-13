@@ -174,10 +174,10 @@ body.tomorrow {
   justify-content: center;
 }
 .kid-svg {
-  height: 100%;
+  height: calc(var(--h, 100) * 1%);
   width: auto;
   max-width: 100%;
-  aspect-ratio: 270 / 390;
+  aspect-ratio: 270 / 410;
 }
 .kid-svg.tall { aspect-ratio: 270 / 470; }
 
@@ -213,7 +213,25 @@ body.tomorrow {
 .bag-icon { width: clamp(60px, 14vh, 150px); display: flex; }
 .bag-icon svg { width: 100%; height: auto; }
 
+.bag .card { width: clamp(50px, 10vh, 110px); }
+.bag .bag-icon { width: clamp(50px, 11vh, 120px); }
+
+/* what to wear, as cards under the figure */
+.items {
+  flex: none;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: .6vw;
+  padding-top: 1vh;
+  margin-top: .6vh;
+  border-top: 3px dotted var(--edge);
+}
+.items .card { width: auto; flex: 0 1 clamp(50px, 10vh, 112px); min-width: min-content; }
+.items .clabel { font-size: clamp(10px, 1.6vh, 16px); }
+
 .kids-3 .card, .kids-4 .card { width: clamp(44px, 9vh, 100px); }
+.kids-3 .items .card, .kids-4 .items .card { width: auto; flex-basis: clamp(44px, 9vh, 100px); }
 .kids-3 .bag-icon, .kids-4 .bag-icon { width: clamp(44px, 10vh, 110px); }
 
 .empty {
@@ -312,9 +330,10 @@ legend { font-weight: 700; padding: 0 6px; }
   .kid { padding: 10px; border-radius: 22px; }
   .kid-name { position: static; align-self: flex-start; font-size: 16px; margin-bottom: 4px; }
   .kid-body { flex: none; gap: 10px; }
-  .kid-svg { height: 300px; }
+  .kid-svg { height: calc(var(--h, 100) * 3px); }
   .bag { padding: 10px 8px; border-radius: 18px; }
-  .card, .kids-3 .card, .kids-4 .card { width: 62px; border-radius: 14px; border-width: 2px; }
+  .items .card, .kids-3 .items .card, .kids-4 .items .card { width: auto; flex-basis: 56px; }
+  .card, .bag .card, .kids-3 .card, .kids-4 .card { width: 56px; border-radius: 14px; border-width: 2px; }
   .bag-icon { width: 60px; }
   .clabel { font-size: 11px; }
 }

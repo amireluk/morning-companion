@@ -86,26 +86,48 @@ function drawShoes(kind, skin) {
   return s;
 }
 
-function backHair(look, hair) {
-  if (look !== 'girl') return '';
-  return shape('M64,98 Q58,34 120,32 Q182,34 176,98 L182,176 Q168,190 152,172 L152,120 L88,120 L88,172 Q72,190 58,176 Z', hair);
+const circ = (x, y, r, fill) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${O}" stroke-width="${SW}"/>`;
+
+// hair styles: 'short', 'curly', 'long'
+function backHair(style, hair) {
+  if (style === 'long') {
+    return shape('M64,98 Q58,34 120,32 Q182,34 176,98 L182,176 Q168,190 152,172 L152,120 L88,120 L88,172 Q72,190 58,176 Z', hair);
+  }
+  if (style === 'curly') {
+    // volume behind the ears
+    return [[62, 96], [178, 96], [64, 120], [176, 120], [74, 138], [166, 138]].map(([x, y]) => circ(x, y, 15, hair)).join('');
+  }
+  return '';
 }
 
-function frontHair(look, hair, covered) {
+function frontHair(style, hair, covered, bow) {
+  if (style === 'curly') {
+    if (covered) return [[66, 98], [174, 98], [70, 118], [170, 118]].map(([x, y]) => circ(x, y, 12, hair)).join('');
+    let s = shape('M66,96 Q62,40 120,38 Q178,40 174,96 Q120,70 66,96 Z', hair);
+    for (let a = -172; a <= -8; a += 16.4) {
+      const r = (a * Math.PI) / 180;
+      s += circ(120 + Math.cos(r) * 50, 94 + Math.sin(r) * 52, 14, hair);
+    }
+    for (let x = 84; x <= 156; x += 18) s += circ(x, 70 + Math.abs(x - 120) * 0.12, 11, hair);
+    return s;
+  }
   if (covered) {
-    // only the bits that peek out under a hat
-    return look === 'girl'
+    return style === 'long'
       ? shape('M70,84 Q66,112 72,128 L80,128 Q78,104 84,86 Z', hair) + shape('M170,84 Q174,112 168,128 L160,128 Q162,104 156,86 Z', hair)
       : '';
   }
-  if (look === 'girl') {
-    return shape('M66,100 Q60,36 120,34 Q180,36 174,100 Q168,72 150,62 Q140,80 118,74 Q98,84 82,70 Q70,80 66,100 Z', hair) +
-      // little bow
-      shape('M150,52 L166,42 L168,62 Z', '#ff6b9a') + shape('M150,52 L136,40 L134,60 Z', '#ff6b9a') +
-      `<circle cx="150" cy="52" r="5" fill="#ff6b9a" stroke="${O}" stroke-width="${SW}"/>`;
+  if (style === 'long') {
+    let s = shape('M66,100 Q60,36 120,34 Q180,36 174,100 Q168,72 150,62 Q140,80 118,74 Q98,84 82,70 Q70,80 66,100 Z', hair);
+    if (bow) {
+      s += shape('M150,52 L166,42 L168,62 Z', '#ff6b9a') + shape('M150,52 L136,40 L134,60 Z', '#ff6b9a') +
+        `<circle cx="150" cy="52" r="5" fill="#ff6b9a" stroke="${O}" stroke-width="${SW}"/>`;
+    }
+    return s;
   }
   return shape('M68,96 Q64,38 120,36 Q176,38 172,96 Q164,74 146,68 Q136,82 118,74 Q100,84 86,72 Q74,80 68,96 Z', hair);
 }
+
+export const hairStyleOf = (child) => child.hairStyle || (child.look === 'girl' ? 'long' : 'short');
 
 function face(skin, mood) {
   let s = '';
@@ -237,7 +259,8 @@ export function drawKid(child, outfit, opts = {}) {
   if (opts.bottle) s += drawBottle();
 
   if (has('umbrella')) s += drawUmbrellaShaft();
-  s += backHair(child.look, hair);
+  const style = hairStyleOf(child);
+  s += backHair(style, hair);
 
   // legs + bottoms
   s += limb(...LEG_L, 24, skin) + limb(...LEG_R, 24, skin);
@@ -271,18 +294,23 @@ export function drawKid(child, outfit, opts = {}) {
   if (has('scarf')) s += drawScarf();
 
   // head
+  // younger kids get a slightly bigger head, older a slightly smaller one
+  const age = child.age || 6;
+  const k = age <= 5 ? 1.1 : age >= 9 ? 0.95 : 1;
+  s += `<g transform="translate(120 128) scale(${k}) translate(-120 -128)">`;
   s += face(skin, mood);
   const hat = has('beanie') ? 'beanie' : has('cap') ? 'cap' : null;
-  s += frontHair(child.look, hair, !!hat);
+  s += frontHair(style, hair, !!hat, child.look === 'girl');
   if (hat === 'beanie') s += drawBeanie();
   if (hat === 'cap') s += drawCap();
+  s += '</g>';
 
   if (has('umbrella')) s += drawUmbrellaCanopy();
 
   // leave room above the head only when an umbrella is drawn (opts.tall keeps
   // all figures of one kid at the same scale)
   const tall = opts.tall ?? has('umbrella');
-  const vb = tall ? '-10 -66 270 470' : '-10 14 270 390';
+  const vb = tall ? '-10 -66 270 470' : '-10 -6 270 410';
   return `<svg class="kid-svg${tall ? ' tall' : ''}" viewBox="${vb}" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" role="img">${s}</svg>`;
 }
 

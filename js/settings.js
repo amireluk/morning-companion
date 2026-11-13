@@ -1,6 +1,6 @@
 import { searchCity, TEL_AVIV } from './weather.js';
 import { newKid } from './store.js';
-import { SKINS, HAIRS, SHIRT_COLORS, drawKid } from './art.js';
+import { SKINS, HAIRS, SHIRT_COLORS, drawKid, hairStyleOf } from './art.js';
 
 const hourOpts = (sel, from, to) => {
   let s = '';
@@ -32,6 +32,8 @@ export function openSettings(current, onSave) {
           <button type="button" class="pill${k.look === 'boy' ? ' on' : ''}" data-k="${i}" data-f="look" data-v="boy">ילד</button>
           <button type="button" class="pill${k.look === 'girl' ? ' on' : ''}" data-k="${i}" data-f="look" data-v="girl">ילדה</button>
         </div>
+        <div class="row"><span>תסרוקת</span>${[['short', 'קצר'], ['curly', 'תלתלים'], ['long', 'ארוך']].map(([v, t]) =>
+          `<button type="button" class="pill${hairStyleOf(k) === v ? ' on' : ''}" data-k="${i}" data-f="hairStyle" data-v="${v}">${t}</button>`).join('')}</div>
         <div class="row"><span>עור</span>${swatches(SKINS, k.skin, 'skin')}</div>
         <div class="row"><span>שיער</span>${swatches(HAIRS, k.hair, 'hair')}</div>
         <div class="row"><span>חולצה</span>${swatches(SHIRT_COLORS, k.color, 'color')}</div>
