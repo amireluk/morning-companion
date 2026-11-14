@@ -19,7 +19,7 @@ const DEMO_HOUR = params.has('hour') ? Number(params.get('hour')) : null;
 let settings = load();
 // at night the screen dims only after this long without a touch (not on opening)
 const AWAKE_MS = 2 * 60_000;
-const state = { loc: null, forecast: null, error: null, fetchedAt: 0, wakeUntil: Date.now() + AWAKE_MS, view: 0, viewUntil: 0 };
+const state = { loc: null, forecast: null, error: null, fetchedAt: 0, wakeUntil: Date.now() + AWAKE_MS, view: 0, viewUntil: 0, graph: false };
 const VIEW_MS = 30_000; // a tapped tile shows its outfit for this long, then back to morning
 const app = document.getElementById('app');
 
@@ -115,7 +115,7 @@ function render() {
     body = `<div class="empty">${weatherIcon(state.error ? 'cloudy' : 'partly')}<div class="spinner"></div></div>`;
   } else {
     const win = day.filter((h) => h.hour >= settings.leaveHour && h.hour <= settings.returnHour);
-    body = timeline(win, readers) + alertsRow(win, key) +
+    body = timeline(win, readers) + (state.graph ? dayGraph(win) : '') + alertsRow(win, key) +
       scene(kids, planOutfit(win, 0, settings.rules), tomorrow, win);
   }
   app.innerHTML = header(tomorrow, date) + body;
@@ -167,8 +167,53 @@ function timeline(win, readers) {
 // Which part of the day the scene shows: 0 = morning (what to wear when
 // leaving), or a tapped tile, until it times out.
 function currentView() {
-  if (state.view && Date.now() > state.viewUntil) state.view = 0;
+  if ((state.view || state.graph) && Date.now() > state.viewUntil) { state.view = 0; state.graph = false; }
   return state.view;
+}
+
+// The day at a glance, opened by tapping the chosen tile again: temperature
+// along the day, and rain only if there is any. Laid out like the tiles –
+// morning on the right – with the chosen part of the day lit up.
+function dayGraph(win) {
+  const W = 600, H = 170, padX = 26, top = 34, bottom = 104;
+  const n = win.length;
+  const x = (i) => W - padX - (i * (W - 2 * padX)) / Math.max(1, n - 1); // right to left
+  const t = win.map((h) => h.feels);
+  const lo = Math.min(...t) - 1, hi = Math.max(...t) + 1;
+  const y = (v) => bottom - ((v - lo) / (hi - lo)) * (bottom - top);
+  const parts = phasesOf(win);
+  const view = currentView();
+  // light band behind the chosen part of the day
+  let start = 0;
+  for (let i = 0; i < view; i++) start += parts[i].length;
+  const end = start + parts[view].length - 1;
+  const half = (W - 2 * padX) / Math.max(1, n - 1) / 2;
+  const band = `<rect x="${x(end) - half}" y="6" width="${x(start) - x(end) + 2 * half}" height="${H - 12}" rx="14" class="g-band"/>`;
+  // rain: soft blue bars from the bottom, only if it may rain
+  const rainy = win.some((h) => h.pop >= 20);
+  const bars = rainy ? win.map((h, i) => {
+    const bh = (h.pop / 100) * 40;
+    return h.pop >= 20 ? `<rect x="${x(i) - 10}" y="${H - 20 - bh}" width="20" height="${bh}" rx="5" class="g-rain"/>` : '';
+  }).join('') : '';
+  // temperature: a smooth line, a coloured dot and the number at every hour
+  const pts = win.map((h, i) => [x(i), y(h.feels)]);
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i], mx = (x0 + x1) / 2;
+    d += ` C${mx},${y0} ${mx},${y1} ${x1},${y1}`;
+  }
+  const dots = win.map((h, i) => {
+    const [px, py] = pts[i];
+    return `<circle cx="${px}" cy="${py}" r="7" fill="${levelColor(h.feels)}" class="g-dot"/>` +
+      `<text x="${px}" y="${py - 14}" class="g-num">${Math.round(h.feels)}°</text>`;
+  }).join('');
+  const rainLabel = rainy ? (() => {
+    const i = win.reduce((m, h, j) => (h.pop > win[m].pop ? j : m), 0);
+    return `<text x="${x(i)}" y="${H - 24 - (win[i].pop / 100) * 40}" class="g-pop">💧${win[i].pop}%</text>`;
+  })() : '';
+  const hours = win.map((h, i) => (i % 2 === 0 || i === n - 1 ? `<text x="${x(i)}" y="${H - 2}" class="g-hour">${h.hour}</text>` : '')).join('');
+  return `<section class="graph" aria-label="מזג האוויר לאורך היום"><svg viewBox="0 0 ${W} ${H}">` +
+    band + bars + rainLabel + `<path d="${d}" class="g-line"/>` + dots + hours + `</svg></section>`;
 }
 
 // "שים לב" – only when there's something unusual to point out
@@ -192,8 +237,7 @@ function scene(kids, plan, tomorrow, win) {
   // morning view (default) is what to put on when leaving the house
   const view = Math.min(currentView(), plan.phases.length - 1);
   const ph = view ? plan.phases[view] : null;
-  const hottest = settings.rules.levels.length - 1;
-  const m = ph ? { ...ph, mood: ph.cold ? 'cold' : levelIndex(ph.tMax, settings.rules) === hottest ? 'hot' : 'ok' } : plan.morning;
+  const m = ph || plan.morning;
   const tint = kids[0]?.color;
   // size figures by age relative to the oldest kid, so siblings differ in
   // height but a kid on their own fills the scene
@@ -219,11 +263,14 @@ function bindGear() {
   app.querySelector('.gear')?.addEventListener('click', showSettings);
   app.querySelectorAll('.phase').forEach((b) => b.addEventListener('click', () => {
     const i = +b.dataset.phase;
-    state.view = i === state.view ? 0 : i; // tapping again goes back to morning
+    // tapping a tile shows that part of the day; tapping the chosen tile again
+    // opens (or closes) the day graph
+    if (i === currentView()) state.graph = !state.graph;
+    else state.view = i;
     state.viewUntil = Date.now() + VIEW_MS;
     render();
     clearTimeout(state.viewTimer);
-    if (state.view) state.viewTimer = setTimeout(render, VIEW_MS + 100);
+    if (state.view || state.graph) state.viewTimer = setTimeout(render, VIEW_MS + 100);
   }));
 }
 

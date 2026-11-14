@@ -597,3 +597,25 @@ legend { font-weight: 700; padding: 0 6px; }
 /* the menu button must show on the dark evening background too */
 .tomorrow .gear { color: #fff4c2; }
 .tomorrow .gear:hover, .tomorrow .gear:focus-visible { background: rgba(255, 244, 194, .12); }
+
+/* ---------- day graph (tap the chosen tile again) ---------- */
+.graph {
+  flex: none;
+  background: var(--card);
+  border: 3px solid var(--edge);
+  border-radius: 22px;
+  padding: 6px 8px 2px;
+  height: clamp(110px, 20vh, 200px);
+}
+.graph svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.g-band { fill: #fff0dc; }
+.tomorrow .g-band { fill: #dcd9f7; }
+.g-line { fill: none; stroke: #f08a4b; stroke-width: 4; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.g-dot { stroke: #3d2b1f; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.g-rain { fill: #8fc4f0; }
+.g-num { font: 700 17px Fredoka, 'Varela Round', sans-serif; fill: #3d2b1f; text-anchor: middle; }
+.g-hour { font: 500 14px Fredoka, 'Varela Round', sans-serif; fill: #8a7563; text-anchor: middle; }
+@media (max-width: 700px), (max-height: 500px) {
+  .graph { height: 120px; border-radius: 16px; padding: 4px 4px 0; }
+}
+.g-pop { font: 700 14px Fredoka, 'Varela Round', sans-serif; fill: #1f6fbf; text-anchor: middle; }

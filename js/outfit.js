@@ -60,9 +60,15 @@ export function phasesOf(hours) {
   return [hours.slice(0, a), hours.slice(a, b), hours.slice(b)];
 }
 
-const ORDER = ['sweatshirt', 'coat', 'scarf', 'beanie', 'gloves', 'umbrella', 'cap'];
+const ORDER = ['tee', 'longsleeve', 'sweatshirt', 'coat', 'scarf', 'beanie', 'gloves', 'umbrella', 'cap'];
 const sortItems = (arr) => [...new Set(arr)].sort((x, y) => ORDER.indexOf(x) - ORDER.indexOf(y));
 
+// The simplest rule: every part of the day (morning / noon / afternoon) wears
+// exactly what the table says for its temperature – the coldest hour of that
+// part, the number on its tile. Leaving the house means wearing the morning's
+// outfit; anything a later part needs that the morning doesn't (a short-sleeve
+// shirt for a hot noon, a cap, an umbrella, a sweatshirt for a cold evening)
+// goes in the bag. Trousers and shoes stay on all day, as in the morning.
 export function planOutfit(hours, offset = 0, rules = defaultRules()) {
   if (!hours.length) return null;
   const L = (t) => rules.levels[levelIndex(t, rules)];
@@ -71,67 +77,37 @@ export function planOutfit(hours, offset = 0, rules = defaultRules()) {
   const feels = hours.map(f);
   const peak = Math.max(...feels);
   const low = Math.min(...feels);
-  const P = L(peak), C = L(low);
   const anyRain = hours.some(rainy);
   const totalMm = hours.reduce((s, h) => s + (h.precip || 0), 0);
+  const hottest = rules.levels.length - 1;
 
-  // base clothes are worn all day: chosen by the warmest hour, but shorts and
-  // sandals only if the coldest hour doesn't call for a warm layer
-  const coldPart = C.sweatshirt || C.coat;
-  const shirt = P.shirt === 'tee' ? 'tee' : 'longsleeve';
-  const bottom = P.bottom === 'shorts' && !coldPart ? 'shorts' : 'pants';
-  const bootsOn = rules.rain.boots === 'any' ? anyRain
-    : rules.rain.boots === 'never' ? false : totalMm >= rules.rain.bootsMm;
-  const shoes = bootsOn ? 'boots'
-    : P.shoes === 'sandals' && !anyRain && C.bottom === 'shorts' ? 'sandals' : 'sneakers';
-
-  const raw = phasesOf(hours).map((ph) => {
+  const phases = phasesOf(hours).map((ph) => {
     const pf = ph.map(f);
     const t = Math.min(...pf), tMax = Math.max(...pf);
-    const lv = L(t), hot = L(tMax);
+    const lv = L(t);
     const layers = [], acc = [];
-    // a sweatshirt when this level asks for one, or when it asks for long
-    // sleeves but the kid is in a short-sleeve shirt
-    if (lv.sweatshirt || (lv.shirt === 'long' && shirt === 'tee')) layers.push('sweatshirt');
+    if (lv.sweatshirt) layers.push('sweatshirt');
     if (lv.coat) layers.push('coat');
     if (lv.winter) acc.push('scarf', 'beanie', 'gloves');
-    const wet = ph.some(rainy);
-    if (wet) acc.push('umbrella');
-    // the cap only where this part of the day is warm enough for it; if the
-    // morning doesn't need it, it goes in the bag (like the umbrella)
-    if (!wet && hot.cap) acc.push('cap');
-    return { from: ph[0].hour, to: ph[ph.length - 1].hour, tMin: t, tMax, layers, acc, hours: ph, cold: lv.winter };
+    if (ph.some(rainy)) acc.push('umbrella');
+    else if (lv.cap) acc.push('cap');
+    return {
+      from: ph[0].hour, to: ph[ph.length - 1].hour, tMin: t, tMax, hours: ph,
+      shirt: lv.shirt === 'tee' ? 'tee' : 'longsleeve', bottom: lv.bottom, shoes: lv.shoes,
+      layers, acc, cold: lv.winter,
+      mood: lv.winter ? 'cold' : levelIndex(t, rules) === hottest ? 'hot' : 'ok',
+    };
   });
 
-  // merge neighbouring phases that need the same clothes
-  const segments = [];
-  for (const p of raw) {
-    const prev = segments[segments.length - 1];
-    if (prev && sameWear(prev, p)) {
-      prev.to = p.to;
-      prev.tMin = Math.min(prev.tMin, p.tMin);
-      prev.tMax = Math.max(prev.tMax, p.tMax);
-      prev.hours = prev.hours.concat(p.hours);
-    } else {
-      segments.push({ ...p });
-    }
-  }
-  const hottest = rules.levels.length - 1;
-  // every part of the day (for tapping a tile) and every merged segment wears
-  // the same base clothes, chosen for the whole day
-  for (const s of [...segments, ...raw]) {
-    s.shirt = shirt; s.bottom = bottom; s.shoes = shoes;
-    s.mood = s.cold ? 'cold' : levelIndex(s.tMax, rules) === hottest ? 'hot' : 'ok';
-  }
+  const morning = phases[0];
+  const bootsOn = rules.rain.boots === 'any' ? anyRain
+    : rules.rain.boots === 'never' ? false : totalMm >= rules.rain.bootsMm;
+  const shoes = bootsOn ? 'boots' : morning.shoes === 'sandals' && anyRain ? 'sneakers' : morning.shoes;
+  for (const p of phases) { p.bottom = morning.bottom; p.shoes = shoes; }
 
-  // what to wear when leaving, and what goes in the bag for later in the day
-  const morning = segments[0];
-  const wornAtStart = new Set([...morning.layers, ...morning.acc]);
-  const bag = sortItems(segments.slice(1).flatMap((s) => [...s.layers, ...s.acc]).filter((id) => !wornAtStart.has(id)));
+  const wornAtStart = new Set([morning.shirt, ...morning.layers, ...morning.acc]);
+  const bag = sortItems(phases.slice(1).flatMap((p) => [p.shirt, ...p.layers, ...p.acc]).filter((id) => !wornAtStart.has(id)));
 
-  return { peak, low, morning, bag, phases: raw };
+  return { peak, low, morning, bag, phases };
 }
 
-function sameWear(a, b) {
-  return a.layers.join() === b.layers.join() && a.acc.join() === b.acc.join();
-}
