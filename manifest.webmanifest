@@ -5,7 +5,7 @@
   "dir": "rtl",
   "start_url": "./",
   "scope": "./",
-  "display": "fullscreen",
+  "display": "standalone",
   "orientation": "any",
   "background_color": "#fff4e0",
   "theme_color": "#fff4e0",

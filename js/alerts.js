@@ -84,7 +84,10 @@ export function computeAlerts(win, rules, base = null) {
   if (coldToHot || swing) {
     // "warmer later" goes without saying: say what's different (sun, or how hot)
     const w = st.warmest;
-    const sunny = w.code <= 2 && (w.day ?? 1);
+    // sunny if that part of the day has sun at all (clear/partly cloudy) or a
+    // real UV level – the same sun the tile's icon and the cap respond to
+    const part = phasesOf(win).find((ph) => ph.includes(w)) || [w];
+    const sunny = part.some((h) => (h.day ?? 1) && (h.code <= 2 || (h.uv || 0) >= 3));
     add(6, sunny ? 'clear' : 'partly', `בבוקר ${word(st.am, rules)}, אבל ${later(w.hour)} ${sunny ? 'שמשי' : word(w.feels, rules)}`);
   }
 
