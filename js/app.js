@@ -108,13 +108,15 @@ function render() {
 }
 
 function header(tomorrow, date) {
-  // the app's name is the question it answers; in the evening it's about tomorrow
-  const badge = `<div class="day-badge${tomorrow ? ' moon' : ''}">${weatherIcon(tomorrow ? 'sunrise' : 'clear')}` +
-    `<div class="titles"><h1 class="app-title">${tomorrow ? 'מה לובשים מחר?' : 'מה לובשים היום?'}</h1>` +
-    `<span class="day-sub">${tomorrow ? 'מחר, ' : ''}יום ${DAYS[date.getDay()]}</span></div></div>`;
+  // the app's name is the question it answers; in the evening it's about tomorrow.
+  // Under it: the day and the place, on one line.
   const locName = DEMO ? `דמו: ${DEMO}` : state.loc?.name || (state.loc ? (state.loc.source === 'default' ? 'תל אביב' : 'המיקום שלך') : '');
   const stale = state.forecast?.stale || state.error ? '<i class="stale" title="אין חיבור – מציג נתונים שמורים"></i>' : '';
-  return `<header class="top">${badge}<div class="where">${stale}<span>${esc(locName)}</span><button class="gear" aria-label="הגדרות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></header>`;
+  const place = locName ? `<span class="sub-sep">·</span>${stale}<span class="sub-loc">${esc(locName)}</span>` : stale;
+  const badge = `<div class="day-badge${tomorrow ? ' moon' : ''}">${weatherIcon(tomorrow ? 'sunrise' : 'clear')}` +
+    `<div class="titles"><h1 class="app-title">${tomorrow ? 'מה לובשים מחר?' : 'מה לובשים היום?'}</h1>` +
+    `<span class="day-sub"><span>${tomorrow ? 'מחר, ' : ''}יום ${DAYS[date.getDay()]}</span>${place}</span></div></div>`;
+  return `<header class="top">${badge}<button class="gear" aria-label="הגדרות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></header>`;
 }
 
 // Three tiles: morning / noon / evening of the hours the kids are out.

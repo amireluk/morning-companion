@@ -65,15 +65,6 @@ body.tomorrow {
 }
 .day-badge .wx-svg { height: 100%; width: auto; }
 .tomorrow .day-badge { color: #fff4c2; }
-.where {
-  display: flex;
-  align-items: center;
-  gap: .5em;
-  color: var(--ink);
-  opacity: .75;
-  font-size: clamp(14px, 2.1vh, 20px);
-}
-.tomorrow .where { color: #c7c9ec; }
 .stale { width: .7em; height: .7em; border-radius: 50%; background: #f0b44b; display: inline-block; }
 .gear {
   border: 0;
@@ -452,11 +443,8 @@ legend { font-weight: 700; padding: 0 6px; }
 
   /* header: keep the menu button on screen */
   .tomorrow .day-badge { font-size: 20px; }
-  .where { min-width: 0; }
   .day-badge { flex: none; }
   .top { gap: 10px; }
-  .where { flex: 1 1 0; justify-content: flex-end; }
-  .where span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .gear { flex: none; }
 
   /* kids stand on the same ground line; scene fills the card */
@@ -532,3 +520,48 @@ legend { font-weight: 700; padding: 0 6px; }
 .panel .cityres .city { text-align: start; min-height: 48px; }
 .cityres .city small { color: var(--muted); }
 .city-msg { color: var(--muted); padding: 6px 2px; }
+
+/* header sub-line: "יום שבת · תל אביב" */
+.day-sub { display: flex; align-items: center; gap: .35em; min-width: 0; }
+.day-sub > span { white-space: nowrap; }
+.day-sub .sub-loc { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.day-badge { min-width: 0; }
+.titles { min-width: 0; }
+.day-sub .stale { flex: none; }
+
+/* ---------- phones: compact pieces (portrait and landscape) ---------- */
+@media (max-width: 700px), (max-height: 500px) {
+  /* "שים לב" title on the same line as the notes */
+  .alerts { flex-wrap: wrap; align-items: center; padding: 6px 8px; gap: 6px; }
+  .alerts-title { width: auto; }
+  /* weather tiles: icon beside the text */
+  .phase { flex-direction: row; gap: 6px; padding: 6px 4px; }
+  .phase .wx-svg { height: 38px; }
+  .phase .sky-svg { height: 24px; }
+  .ptext { gap: 3px; }
+  .pname { font-size: 15px; }
+  .tchip { min-width: 50px; height: 22px; }
+  .pfeel { font-size: 13px; }
+  /* bag: a low row */
+  .bag { padding: 6px 10px; gap: 8px; }
+  .bag .card { width: 46px; }
+  .bag .bag-icon { width: 42px; }
+  .bag .bag-title { font-size: 15px; }
+  /* clothing cards a little smaller */
+  .items { padding-top: 6px; }
+  .items .card, .kids-3 .items .card { max-width: 82px; }
+}
+
+/* ---------- phone held upright: everything on one screen, no scrolling.
+   The kids take whatever height is left. (Landscape keeps scrolling.) ---------- */
+@media (max-width: 700px) and (min-height: 501px) {
+  html { height: 100%; }
+  body { height: 100%; }
+  #app { height: 100vh; height: 100dvh; min-height: 520px; gap: 8px; }
+  .scene { flex: 1 1 0; min-height: 0; padding: 8px; }
+  .scene-body { flex: 1 1 0; min-height: 0; gap: 8px; }
+  .figs { flex: 1 1 0; min-height: 0; width: 100%; container-type: size; align-items: flex-end; }
+  .fig { height: 100%; justify-content: flex-end; }
+  .fig-art { flex: 1 1 0; min-height: 0; }
+  .kid-svg, .kids-3 .kid-svg { height: calc((100cqh - 36px) * var(--h, 100) / 100); max-width: 100%; }
+}
