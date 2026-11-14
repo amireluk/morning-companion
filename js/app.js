@@ -181,7 +181,7 @@ function scene(kids, plan, tomorrow, win) {
   const tint = kids[0]?.color;
   // size figures by age relative to the oldest kid, so siblings differ in
   // height but a kid on their own fills the scene
-  const raw = (kid) => Math.max(70, Math.min(100, 70 + ((kid.age || 6) - 3) * 6));
+  const raw = (kid) => ((kid.age ?? 6) <= 2 ? 56 : Math.max(70, Math.min(100, 70 + ((kid.age ?? 6) - 3) * 6))); // babies are small
   const tallest = Math.max(...kids.map(raw));
   const figs = kids.map((kid) => {
     const h = Math.round((raw(kid) / tallest) * 100);

@@ -257,12 +257,175 @@ function drawBottle() {
     shape('M40,324 L54,324 L54,336 L40,336 Z', '#3fa7a0');
 }
 
+
+// ---------- baby / toddler (age 0–2) ----------
+// Same viewBox as the kid, but toddler proportions: a big head, a round body
+// with a nappy bump, short chubby limbs, and baby versions of the clothes
+// (bodysuit, booties, mittens, a sun hat instead of a cap). Babies don't hold
+// umbrellas or wear scarves.
+export const isBaby = (child) => (child.age ?? 6) <= 2;
+
+const B_ARM_L = [90, 196, 54, 254];
+const B_ARM_R = [150, 196, 186, 254];
+const B_LEG_L = [100, 318, 98, 358];
+const B_LEG_R = [140, 318, 142, 358];
+const B_BODY = 'M84,180 Q120,166 156,180 Q186,230 178,294 Q120,310 62,294 Q54,230 84,180 Z';
+const B_SWEAT = 'M82,178 Q120,164 158,178 Q184,226 178,298 Q120,314 62,298 Q56,226 82,178 Z';
+const B_COAT = 'M80,176 Q120,160 160,176 Q186,192 180,214 Q192,236 180,256 Q192,278 178,300 Q120,322 62,300 Q48,278 60,256 Q48,236 60,214 Q54,192 80,176 Z';
+const B_SEAT = 'M62,272 L178,272 Q190,328 146,332 L94,332 Q50,328 62,272 Z';
+
+function babyFace(skin, mood) {
+  let s = '';
+  s += circ(50, 122, 13, skin) + circ(190, 122, 13, skin);
+  s += `<circle cx="120" cy="112" r="72" fill="${skin}" stroke="${O}" stroke-width="${SW}"/>`;
+  // big low-set eyes
+  s += `<ellipse cx="97" cy="126" rx="7.5" ry="9.5" fill="${O}"/><ellipse cx="143" cy="126" rx="7.5" ry="9.5" fill="${O}"/>`;
+  s += `<circle cx="100" cy="122" r="3" fill="#fff"/><circle cx="146" cy="122" r="3" fill="#fff"/>`;
+  s += line('M90,108 Q97,104 104,107', O, 2.5) + line('M136,107 Q143,104 150,108', O, 2.5);
+  const cheek = mood === 'cold' ? '#ff6f7d' : '#ff9a9a';
+  s += `<ellipse cx="80" cy="146" rx="11" ry="7" fill="${cheek}" opacity="${mood === 'cold' ? 0.75 : 0.55}"/>` +
+    `<ellipse cx="160" cy="146" rx="11" ry="7" fill="${cheek}" opacity="${mood === 'cold' ? 0.75 : 0.55}"/>`;
+  s += `<ellipse cx="120" cy="140" rx="4" ry="3" fill="${shade(skin, -0.18)}"/>`;
+  s += shape('M110,152 Q120,162 130,152 Q120,156 110,152 Z', '#c2453f');
+  if (mood === 'hot') s += shape('M172,74 Q180,86 176,92 Q168,94 168,86 Q168,80 172,74 Z', '#8fd0f2');
+  if (mood === 'cold') s += `<g opacity="0.85" fill="#ffffff" stroke="#b9d4ee" stroke-width="2"><circle cx="150" cy="168" r="6"/><circle cx="161" cy="164" r="8"/><circle cx="174" cy="160" r="5"/></g>`;
+  return s;
+}
+
+function babyHair(style, hair, girl) {
+  let s = '';
+  if (style === 'curly') {
+    for (const [x, y] of [[96, 50], [112, 42], [128, 42], [144, 50], [120, 54]]) s += circ(x, y, 11, hair);
+  } else {
+    // a little curl on top
+    s += shape('M112,46 Q108,22 128,22 Q144,24 140,38 Q136,30 128,32 Q122,34 124,46 Z', hair);
+  }
+  if (style === 'long') {
+    // two tiny pigtails
+    s += circ(60, 66, 10, hair) + circ(180, 66, 10, hair) + circ(68, 74, 4, '#ff6b9a') + circ(172, 74, 4, '#ff6b9a');
+  }
+  if (girl) {
+    s += shape('M140,52 L156,42 L158,62 Z', '#ff6b9a') + shape('M140,52 L126,42 L124,62 Z', '#ff6b9a') +
+      `<circle cx="140" cy="52" r="5" fill="#ff6b9a" stroke="${O}" stroke-width="${SW}"/>`;
+  }
+  return s;
+}
+
+function babyFeet(kind, skin) {
+  let s = '';
+  for (const x of [100, 140]) {
+    const y = 374;
+    if (kind === 'boots') {
+      s += shape(`M${x - 15},${y - 34} L${x + 15},${y - 34} L${x + 16},${y + 4} L${x + 19},${y + 10} L${x - 19},${y + 10} L${x - 16},${y + 4} Z`, COLORS.boots);
+      s += line(`M${x - 15},${y - 26} L${x + 15},${y - 26}`, shade(COLORS.boots, -0.15), 4);
+    } else if (kind === 'sandals') {
+      s += `<ellipse cx="${x}" cy="${y}" rx="18" ry="11" fill="${skin}" stroke="${O}" stroke-width="${SW}"/>`;
+      s += line(`M${x - 15},${y - 2} L${x + 15},${y - 2}`, COLORS.sandals, 6);
+      s += shape(`M${x - 20},${y + 6} L${x + 20},${y + 6} L${x + 20},${y + 12} L${x - 20},${y + 12} Z`, COLORS.sandals);
+    } else {
+      // soft booties
+      s += `<ellipse cx="${x}" cy="${y}" rx="20" ry="13" fill="${COLORS.sneakers}" stroke="${O}" stroke-width="${SW}"/>`;
+      s += line(`M${x - 13},${y - 8} Q${x},${y - 14} ${x + 13},${y - 8}`, '#ffffff', 4);
+      s += `<circle cx="${x}" cy="${y - 1}" r="3.5" fill="#ffffff" stroke="${O}" stroke-width="2"/>`;
+    }
+  }
+  return s;
+}
+
+function drawBaby(child, outfit, opts) {
+  const skin = SKINS[child.skin] ?? SKINS[0];
+  const hair = HAIRS[child.hair] ?? HAIRS[0];
+  const shirtColor = child.color || SHIRT_COLORS[0];
+  const layers = outfit.layers || [];
+  const acc = outfit.acc || [];
+  const has = (k) => layers.includes(k) || acc.includes(k);
+  const mood = opts.mood || 'ok';
+  const girl = child.look === 'girl';
+  let s = `<ellipse cx="120" cy="394" rx="70" ry="10" fill="#000" opacity="0.08"/>`;
+
+  // hood resting behind the head
+  if (has('sweatshirt') && !has('coat')) s += shape('M66,196 Q56,150 92,140 L148,140 Q184,150 174,196 Q120,214 66,196 Z', COLORS.sweatshirt);
+
+  // legs, bottoms, feet
+  s += limb(...B_LEG_L, 36, skin) + limb(...B_LEG_R, 36, skin);
+  const shorts = outfit.bottom === 'shorts';
+  const bc = shorts ? COLORS.shorts : COLORS.pants;
+  s += partial(...B_LEG_L, shorts ? 0.3 : 0.92, 42, bc) + partial(...B_LEG_R, shorts ? 0.3 : 0.92, 42, bc);
+  s += shape(B_SEAT, bc); // round nappy bump under the bottoms
+  s += babyFeet(outfit.shoes, skin);
+
+  // arms + sleeves
+  const seg = (arm, f0, f1, w, c) => {
+    const [x1, y1, x2, y2] = arm;
+    return limb(lerp(x1, x2, f0), lerp(y1, y2, f0), lerp(x1, x2, f1), lerp(y1, y2, f1), w, c);
+  };
+  for (const arm of [B_ARM_L, B_ARM_R]) {
+    s += limb(...arm, 24, skin);
+    s += partial(...arm, outfit.shirt === 'tee' ? 0.32 : 0.84, 26, shirtColor);
+    if (has('sweatshirt')) s += partial(...arm, 0.8, 32, COLORS.sweatshirt) + seg(arm, 0.78, 0.88, 35, shade(COLORS.sweatshirt, -0.15));
+    if (has('coat')) for (const [f0, f1] of [[0, 0.4], [0.34, 0.72], [0.64, 0.92]]) s += seg(arm, f0, f1, 42, COLORS.coat);
+    const [, , hx, hy] = arm;
+    s += has('gloves')
+      ? `<ellipse cx="${hx}" cy="${hy + 4}" rx="16" ry="18" fill="${COLORS.gloves}" stroke="${O}" stroke-width="${SW}"/>` +
+        shape(`M${hx - 15},${hy - 10} L${hx + 15},${hy - 10} L${hx + 15},${hy - 3} L${hx - 15},${hy - 3} Z`, '#ffffff')
+      : `<circle cx="${hx}" cy="${hy + 2}" r="13" fill="${skin}" stroke="${O}" stroke-width="${SW}"/>`;
+  }
+
+  // body: bodysuit, then hoodie / puffer
+  s += shape(B_BODY, shirtColor);
+  if (outfit.shirt === 'longsleeve') {
+    for (let y = 196; y < 290; y += 16) s += line(`M80,${y} L160,${y}`, shade(shirtColor, 0.22), 6);
+    s += `<path d="${B_BODY}" fill="none" stroke="${O}" stroke-width="${SW}" stroke-linejoin="round"/>`;
+  } else {
+    // little heart / star motif
+    s += girl
+      ? shape('M120,246 Q102,230 108,220 Q114,212 120,222 Q126,212 132,220 Q138,230 120,246 Z', '#ffffff')
+      : shape('M120,210 L125,222 L138,223 L128,231 L131,244 L120,236 L109,244 L112,231 L102,223 L115,222 Z', '#ffffff');
+  }
+  if (has('sweatshirt')) {
+    s += shape(B_SWEAT, COLORS.sweatshirt) +
+      shape('M98,240 L142,240 L150,274 L90,274 Z', shade(COLORS.sweatshirt, -0.08)) +
+      line('M112,184 L110,212 M128,184 L130,212', '#ffffff', 4);
+  }
+  if (has('coat')) {
+    const c = COLORS.coat;
+    s += shape(B_COAT, c);
+    for (const y of [214, 256]) s += line(`M62,${y} Q120,${y + 10} 178,${y}`, shade(c, -0.22), 3);
+    for (const y of [196, 236, 278]) s += line(`M84,${y} Q120,${y - 8} 156,${y}`, shade(c, 0.28), 5, 'opacity="0.7"');
+    s += line('M120,170 L120,314', shade(c, -0.32), 3);
+  }
+  if (!has('sweatshirt') && !has('coat')) s += shape('M106,178 Q120,190 134,178 Z', skin);
+
+  // head
+  s += babyFace(skin, mood);
+  if (has('beanie')) {
+    const c = COLORS.beanie;
+    s += shape('M48,108 Q46,34 120,32 Q194,34 192,108 Z', c) +
+      line('M90,44 L86,102 M120,36 L120,102 M150,44 L154,102', shade(c, -0.12), 3) +
+      shape('M44,98 Q120,86 196,98 L196,116 Q120,104 44,116 Z', shade(c, -0.12)) +
+      `<circle cx="120" cy="28" r="14" fill="#ffffff" stroke="${O}" stroke-width="${SW}"/>`;
+  } else if (has('cap')) {
+    // baby sun hat: soft crown + wide floppy brim
+    const c = COLORS.cap;
+    s += shape('M58,80 Q60,30 120,28 Q180,30 182,80 Z', c) +
+      shape('M22,84 Q120,58 218,84 Q226,100 204,100 Q120,82 36,100 Q14,100 22,84 Z', shade(c, -0.1)) +
+      line('M60,76 Q120,66 180,76', shade(c, -0.25), 3);
+  } else {
+    s += babyHair(hairStyleOf(child), hair, girl);
+  }
+
+  const tall = opts.tall ?? has('umbrella');
+  const vb = tall ? '-10 -66 270 470' : '-10 -6 270 410';
+  return `<svg class="kid-svg${tall ? ' tall' : ''}" viewBox="${vb}" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" role="img">${s}</svg>`;
+}
+
 /**
  * Draw the kid wearing an outfit.
  * child: { look: 'boy'|'girl', skin, hair, color }
  * outfit: { shirt, bottom, shoes, layers: [], acc: [] }
  */
 export function drawKid(child, outfit, opts = {}) {
+  if (isBaby(child)) return drawBaby(child, outfit, opts);
   const skin = SKINS[child.skin] ?? SKINS[0];
   const hair = HAIRS[child.hair] ?? HAIRS[0];
   const shirtColor = child.color || SHIRT_COLORS[0];
@@ -332,7 +495,7 @@ export function drawKid(child, outfit, opts = {}) {
 
   // head
   // younger kids get a slightly bigger head, older a slightly smaller one
-  const age = child.age || 6;
+  const age = child.age ?? 6;
   const k = age <= 5 ? 1.1 : age >= 9 ? 0.95 : 1;
   s += `<g transform="translate(120 128) scale(${k}) translate(-120 -128)">`;
   s += face(skin, mood);

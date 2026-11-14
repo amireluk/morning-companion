@@ -27,7 +27,7 @@ export function openSettings(current, onSave) {
       <div class="kid-prev">${drawKid(k, PREVIEW)}</div>
       <div class="kid-fields">
         <label>שם <input data-k="${i}" data-f="name" value="${esc(k.name)}" placeholder="לא חובה"></label>
-        <label>גיל <input type="number" min="2" max="14" data-k="${i}" data-f="age" value="${k.age}"></label>
+        <label>גיל <input type="number" min="0" max="14" data-k="${i}" data-f="age" value="${k.age}"></label>
         <div class="row">
           <button type="button" class="pill${k.look === 'boy' ? ' on' : ''}" data-k="${i}" data-f="look" data-v="boy">ילד</button>
           <button type="button" class="pill${k.look === 'girl' ? ' on' : ''}" data-k="${i}" data-f="look" data-v="girl">ילדה</button>
