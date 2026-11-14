@@ -82,7 +82,10 @@ export function computeAlerts(win, rules, base = null) {
   const hotLv = st.warmest && rules.levels[levelIndex(st.warmest.feels, rules)];
   const coldToHot = hotLv && (amLv.sweatshirt || amLv.coat) && hotLv.cap;
   if (coldToHot || swing) {
-    add(6, 'partly', `בבוקר ${word(st.am, rules)}, אבל ${later(st.warmest.hour)} ${word(st.warmest.feels, rules)}`);
+    // "warmer later" goes without saying: say what's different (sun, or how hot)
+    const w = st.warmest;
+    const sunny = w.code <= 2 && (w.day ?? 1);
+    add(6, sunny ? 'clear' : 'partly', `בבוקר ${word(st.am, rules)}, אבל ${later(w.hour)} ${sunny ? 'שמשי' : word(w.feels, rules)}`);
   }
 
   return out.sort((a, b) => a.rank - b.rank).slice(0, 3);
