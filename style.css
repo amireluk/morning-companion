@@ -593,3 +593,7 @@ legend { font-weight: 700; padding: 0 6px; }
 }
 .hint-bubble b { font-size: 21px; }
 .hint-bubble small { color: var(--muted); font-size: 14px; }
+
+/* the menu button must show on the dark evening background too */
+.tomorrow .gear { color: #fff4c2; }
+.tomorrow .gear:hover, .tomorrow .gear:focus-visible { background: rgba(255, 244, 194, .12); }
