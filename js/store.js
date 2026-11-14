@@ -46,7 +46,11 @@ export const defaults = () => ({
 export function load() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY));
-    if (s && Array.isArray(s.kids)) return { ...defaults(), ...s, rules: normalizeRules(s.rules) };
+    if (s && Array.isArray(s.kids)) {
+      // there used to be four skin tones; the darkest is now the third
+      const kids = s.kids.map((k) => ({ ...k, skin: Math.min(k.skin ?? 0, SKINS.length - 1) }));
+      return { ...defaults(), ...s, kids, rules: normalizeRules(s.rules) };
+    }
   } catch { /* ignore */ }
   // first launch: start straight away with a random kid, and keep it
   const fresh = defaults();

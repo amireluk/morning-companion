@@ -235,7 +235,7 @@ function showHint() {
     el.className = 'hint-layer';
     el.innerHTML = `<div class="hint-spot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div>
       <svg class="hint-arrow" viewBox="0 0 120 90" aria-hidden="true"><path d="M110,82 C96,40 60,20 16,14" /><path d="M30,4 L14,14 L28,26" /></svg>
-      <div class="hint-bubble"><b>מי הילדים שלכם?</b><span>לחצו כאן כדי להוסיף שם, גיל ומראה לכל ילד</span><small>נגיעה בכל מקום אחר תסגור את זה</small></div>`;
+      <div class="hint-bubble"><b>לחץ להוספת ילד</b></div>`;
     el.addEventListener('click', (e) => {
       const r = app.querySelector('.gear')?.getBoundingClientRect();
       const onGear = r && e.clientX >= r.left - 12 && e.clientX <= r.right + 12 && e.clientY >= r.top - 12 && e.clientY <= r.bottom + 12;

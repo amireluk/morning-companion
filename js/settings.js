@@ -27,12 +27,12 @@ export function openSettings(current, onSave) {
     return `<div class="kid-edit">
       <div class="kid-prev">${drawKid(k, PREVIEW)}</div>
       <div class="kid-fields">
-        <label>שם <input data-k="${i}" data-f="name" value="${esc(k.name)}" placeholder="לא חובה"></label>
-        <div class="row">${[['boy', 'ילד'], ['girl', 'ילדה'], ['baby', 'פעוט/ה']].map(([v, t]) =>
+        <label>שם <input data-k="${i}" data-f="name" value="${esc(k.name)}"></label>
+        <div class="row">${[['boy', 'ילד'], ['girl', 'ילדה'], ['baby', 'פעוט']].map(([v, t]) =>
           `<button type="button" class="pill${k.look === v ? ' on' : ''}" data-k="${i}" data-f="look" data-v="${v}">${t}</button>`).join('')}</div>
         ${baby ? '' : `<label>גיל <input type="number" min="3" max="14" data-k="${i}" data-f="age" value="${k.age}"></label>`}
-        <div class="row"><span>תסרוקת</span>${[['short', 'קצר'], ['curly', 'תלתלים'], ['long', baby ? 'קוקיות' : 'ארוך']].map(([v, t]) =>
-          `<button type="button" class="pill${hairStyleOf(k) === v ? ' on' : ''}" data-k="${i}" data-f="hairStyle" data-v="${v}">${t}</button>`).join('')}</div>
+        ${baby ? '' : `<div class="row"><span>תסרוקת</span>${[['short', 'קצר'], ['curly', 'תלתלים'], ['long', 'ארוך']].map(([v, t]) =>
+          `<button type="button" class="pill${hairStyleOf(k) === v ? ' on' : ''}" data-k="${i}" data-f="hairStyle" data-v="${v}">${t}</button>`).join('')}</div>`}
         <div class="row"><span>עור</span>${swatches(SKINS, k.skin, 'skin')}</div>
         <div class="row"><span>שיער</span>${swatches(HAIRS, k.hair, 'hair')}</div>
         <div class="row"><span>חולצה</span>${swatches(SHIRT_COLORS, k.color, 'color')}</div>

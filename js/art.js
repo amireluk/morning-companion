@@ -5,7 +5,7 @@
 const O = '#3d2b1f'; // outline colour
 const SW = 3; // outline width
 
-export const SKINS = ['#fbd9b8', '#eebf94', '#cf9566', '#8f5c3c'];
+export const SKINS = ['#fbd9b8', '#e0ac7e', '#8f5c3c']; // light, medium, dark
 export const HAIRS = ['#3b2416', '#7a4a24', '#d9a441', '#1f1a17', '#b5522b'];
 export const SHIRT_COLORS = ['#ffcf3f', '#ff8fb1', '#7ec8e3', '#9ad97a', '#c79bf2', '#ff9f5a'];
 
@@ -333,14 +333,14 @@ function babyFeet(kind, skin) {
 }
 
 function drawBaby(child, outfit, opts) {
-  const skin = SKINS[child.skin] ?? SKINS[0];
+  const skin = SKINS[Math.min(child.skin ?? 0, SKINS.length - 1)];
   const hair = HAIRS[child.hair] ?? HAIRS[0];
   const shirtColor = child.color || SHIRT_COLORS[0];
   const layers = outfit.layers || [];
   const acc = outfit.acc || [];
   const has = (k) => layers.includes(k) || acc.includes(k);
   const mood = opts.mood || 'ok';
-  const girl = hairStyleOf(child) === 'long'; // pigtails get a bow and a heart
+  const girl = false; // toddlers: no hairstyle choice, one look
   let s = `<ellipse cx="120" cy="394" rx="70" ry="10" fill="#000" opacity="0.08"/>`;
 
   // hood resting behind the head
@@ -411,7 +411,7 @@ function drawBaby(child, outfit, opts) {
       shape('M22,84 Q120,58 218,84 Q226,100 204,100 Q120,82 36,100 Q14,100 22,84 Z', shade(c, -0.1)) +
       line('M60,76 Q120,66 180,76', shade(c, -0.25), 3);
   } else {
-    s += babyHair(hairStyleOf(child), hair, girl);
+    s += babyHair('short', hair, false);
   }
 
   const tall = opts.tall ?? has('umbrella');
@@ -426,7 +426,7 @@ function drawBaby(child, outfit, opts) {
  */
 export function drawKid(child, outfit, opts = {}) {
   if (isBaby(child)) return drawBaby(child, outfit, opts);
-  const skin = SKINS[child.skin] ?? SKINS[0];
+  const skin = SKINS[Math.min(child.skin ?? 0, SKINS.length - 1)];
   const hair = HAIRS[child.hair] ?? HAIRS[0];
   const shirtColor = child.color || SHIRT_COLORS[0];
   const layers = outfit.layers || [];
