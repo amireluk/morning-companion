@@ -23,16 +23,15 @@ export function openSettings(current, onSave) {
   function kidHtml(k, i) {
     const swatches = (arr, sel, field) => arr.map((c, j) =>
       `<button type="button" class="sw${(field === 'color' ? c === sel : j === sel) ? ' on' : ''}" style="background:${c}" data-k="${i}" data-f="${field}" data-v="${field === 'color' ? c : j}"></button>`).join('');
+    const baby = k.look === 'baby'; // toddlers need no age
     return `<div class="kid-edit">
       <div class="kid-prev">${drawKid(k, PREVIEW)}</div>
       <div class="kid-fields">
         <label>שם <input data-k="${i}" data-f="name" value="${esc(k.name)}" placeholder="לא חובה"></label>
-        <label>גיל <input type="number" min="0" max="14" data-k="${i}" data-f="age" value="${k.age}"></label>
-        <div class="row">
-          <button type="button" class="pill${k.look === 'boy' ? ' on' : ''}" data-k="${i}" data-f="look" data-v="boy">ילד</button>
-          <button type="button" class="pill${k.look === 'girl' ? ' on' : ''}" data-k="${i}" data-f="look" data-v="girl">ילדה</button>
-        </div>
-        <div class="row"><span>תסרוקת</span>${[['short', 'קצר'], ['curly', 'תלתלים'], ['long', 'ארוך']].map(([v, t]) =>
+        <div class="row">${[['boy', 'ילד'], ['girl', 'ילדה'], ['baby', 'פעוט/ה']].map(([v, t]) =>
+          `<button type="button" class="pill${k.look === v ? ' on' : ''}" data-k="${i}" data-f="look" data-v="${v}">${t}</button>`).join('')}</div>
+        ${baby ? '' : `<label>גיל <input type="number" min="3" max="14" data-k="${i}" data-f="age" value="${k.age}"></label>`}
+        <div class="row"><span>תסרוקת</span>${[['short', 'קצר'], ['curly', 'תלתלים'], ['long', baby ? 'קוקיות' : 'ארוך']].map(([v, t]) =>
           `<button type="button" class="pill${hairStyleOf(k) === v ? ' on' : ''}" data-k="${i}" data-f="hairStyle" data-v="${v}">${t}</button>`).join('')}</div>
         <div class="row"><span>עור</span>${swatches(SKINS, k.skin, 'skin')}</div>
         <div class="row"><span>שיער</span>${swatches(HAIRS, k.hair, 'hair')}</div>
@@ -188,6 +187,8 @@ export function openSettings(current, onSave) {
     if (b.dataset.k != null && b.dataset.f) {
       const k = s.kids[+b.dataset.k], f = b.dataset.f;
       k[f] = f === 'skin' || f === 'hair' ? +b.dataset.v : b.dataset.v;
+      if (f === 'look') k.age = k.look === 'baby' ? 1 : Math.max(3, k.age ?? 5);
+      syncNames();
       draw();
     }
   });

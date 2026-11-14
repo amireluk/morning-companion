@@ -258,12 +258,12 @@ function drawBottle() {
 }
 
 
-// ---------- baby / toddler (age 0–2) ----------
+// ---------- toddler (look: 'baby') ----------
 // Same viewBox as the kid, but toddler proportions: a big head, a round body
 // with a nappy bump, short chubby limbs, and baby versions of the clothes
 // (bodysuit, booties, mittens, a sun hat instead of a cap). Babies don't hold
 // umbrellas or wear scarves.
-export const isBaby = (child) => (child.age ?? 6) <= 2;
+export const isBaby = (child) => child.look === 'baby';
 
 const B_ARM_L = [90, 196, 54, 254];
 const B_ARM_R = [150, 196, 186, 254];
@@ -340,7 +340,7 @@ function drawBaby(child, outfit, opts) {
   const acc = outfit.acc || [];
   const has = (k) => layers.includes(k) || acc.includes(k);
   const mood = opts.mood || 'ok';
-  const girl = child.look === 'girl';
+  const girl = hairStyleOf(child) === 'long'; // pigtails get a bow and a heart
   let s = `<ellipse cx="120" cy="394" rx="70" ry="10" fill="#000" opacity="0.08"/>`;
 
   // hood resting behind the head

@@ -105,6 +105,7 @@ function render() {
   }
   app.innerHTML = header(tomorrow, date) + body;
   bindGear();
+  showHint();
 }
 
 function header(tomorrow, date) {
@@ -181,7 +182,7 @@ function scene(kids, plan, tomorrow, win) {
   const tint = kids[0]?.color;
   // size figures by age relative to the oldest kid, so siblings differ in
   // height but a kid on their own fills the scene
-  const raw = (kid) => ((kid.age ?? 6) <= 2 ? 56 : Math.max(70, Math.min(100, 70 + ((kid.age ?? 6) - 3) * 6))); // babies are small
+  const raw = (kid) => (kid.look === 'baby' ? 56 : Math.max(70, Math.min(100, 70 + ((kid.age ?? 6) - 3) * 6))); // babies are small
   const tallest = Math.max(...kids.map(raw));
   const figs = kids.map((kid) => {
     const h = Math.round((raw(kid) / tallest) * 100);
@@ -212,12 +213,41 @@ function bindGear() {
 }
 
 function showSettings() {
+  hideHint();
   openSettings(settings, (next) => {
-    settings = next;
+    settings = { ...next, kidsSetUp: true };
     save(settings);
     refresh();
   });
 }
+
+// ---------- first-time hint: points at the menu until someone sets up the kids ----------
+// Shown on every launch while the kids are still the random starter kid; one
+// tap anywhere puts it away until the next launch, a tap on the menu opens it.
+let hintGone = false;
+function hideHint() { hintGone = true; document.querySelector('.hint-layer')?.remove(); }
+function showHint() {
+  const gear = app.querySelector('.gear');
+  if (hintGone || settings.kidsSetUp || !gear || document.querySelector('.settings')) return;
+  let el = document.querySelector('.hint-layer');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'hint-layer';
+    el.innerHTML = `<div class="hint-spot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div>
+      <svg class="hint-arrow" viewBox="0 0 120 90" aria-hidden="true"><path d="M110,82 C96,40 60,20 16,14" /><path d="M30,4 L14,14 L28,26" /></svg>
+      <div class="hint-bubble"><b>מי הילדים שלכם?</b><span>לחצו כאן כדי להוסיף שם, גיל ומראה לכל ילד</span><small>נגיעה בכל מקום אחר תסגור את זה</small></div>`;
+    el.addEventListener('click', (e) => {
+      const r = app.querySelector('.gear')?.getBoundingClientRect();
+      const onGear = r && e.clientX >= r.left - 12 && e.clientX <= r.right + 12 && e.clientY >= r.top - 12 && e.clientY <= r.bottom + 12;
+      if (onGear) showSettings(); else hideHint();
+    });
+    document.body.appendChild(el);
+  }
+  const r = gear.getBoundingClientRect();
+  el.style.setProperty('--x', `${r.left + r.width / 2}px`);
+  el.style.setProperty('--y', `${r.top + r.height / 2}px`);
+}
+addEventListener('resize', () => showHint());
 
 // ---------- screen: always on, dimmed by an overlay at night ----------
 // (releasing the wake lock at night would let Android lock the tablet, and a
