@@ -23,6 +23,21 @@ const state = { loc: null, forecast: null, error: null, fetchedAt: 0, wakeUntil:
 const VIEW_MS = 30_000; // a tapped tile shows its outfit for this long, then back to morning
 const app = document.getElementById('app');
 
+// The real visible height, measured. On Android the installed (full-screen)
+// app can start with a stale 100dvh that is taller than the screen until the
+// next relayout, which made the page scroll a little on first open.
+function fitHeight() {
+  const h = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty('--app-h', `${Math.round(h)}px`);
+}
+fitHeight();
+addEventListener('resize', fitHeight);
+window.visualViewport?.addEventListener('resize', fitHeight);
+addEventListener('orientationchange', () => setTimeout(fitHeight, 300));
+addEventListener('pageshow', fitHeight);
+// the switch to full screen can land a moment after load
+for (const ms of [250, 800, 2000]) setTimeout(fitHeight, ms);
+
 const now = () => {
   const d = new Date();
   if (DEMO_HOUR != null) d.setHours(DEMO_HOUR, 0, 0, 0);
