@@ -71,8 +71,8 @@ const sortItems = (arr) => [...new Set(arr)].sort((x, y) => ORDER.indexOf(x) - O
 // accessories a later part needs that the morning doesn't (a cap, an
 // umbrella, a sweatshirt for a cold evening) go in the bag.
 // The shirt is one for the whole day – nobody changes shirts at school: if
-// any part of the day calls for short sleeves, it's a short-sleeve shirt, and
-// a part that wanted long sleeves gets a sweatshirt over it instead.
+// any part of the day calls for short sleeves, it's a short-sleeve shirt.
+// Sweatshirts, coats and the rest come only from the table.
 // Trousers and shoes stay on all day: shorts and sandals only if the whole
 // day is warm enough for them.
 export function planOutfit(hours, offset = 0, rules = defaultRules()) {
@@ -94,7 +94,7 @@ export function planOutfit(hours, offset = 0, rules = defaultRules()) {
     const t = Math.min(...pf), tMax = Math.max(...pf);
     const lv = L(t);
     const layers = [], acc = [];
-    if (lv.sweatshirt || (lv.shirt === 'long' && dayTee)) layers.push('sweatshirt');
+    if (lv.sweatshirt) layers.push('sweatshirt');
     if (lv.coat) layers.push('coat');
     if (lv.winter) acc.push('scarf', 'beanie', 'gloves');
     if (ph.some(rainy)) acc.push('umbrella');

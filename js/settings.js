@@ -90,7 +90,7 @@ export function openSettings(current, onSave) {
       <div class="hint">לפי הטמפרטורה המורגשת. לחיצה על שורה פותחת אותה לעריכה.</div>
       <div class="ruler">${ruler}</div>
       <div class="levels">${rows}</div>
-      <div class="hint">כל חלק ביום לובש את מה שכתוב לטמפרטורה שלו. יוצאים מהבית בבגדים של הבוקר, ומה שצריך רק בהמשך היום מופיע ב"לקחת איתך". חולצה אחת לכל היום: אם בחלק כלשהו צריך חולצה קצרה – לובשים קצרה, ובחלקים הקרים סווטשירט מעליה.</div>
+      <div class="hint">כל חלק ביום לובש את מה שכתוב לטמפרטורה שלו. יוצאים מהבית בבגדים של הבוקר, ומה שצריך רק בהמשך היום מופיע ב"לקחת איתך". חולצה אחת לכל היום: אם בחלק כלשהו צריך חולצה קצרה – לובשים קצרה מהבוקר.</div>
     </fieldset>
     <fieldset><legend>גשם</legend>
       <div class="lv-line stack"><span class="lv-lab">מטריה כשסיכוי הגשם לפחות</span>${stepper('data-rain="chance"', R.rain.chance, 10, 100, '%')}</div>
