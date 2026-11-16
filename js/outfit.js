@@ -13,7 +13,7 @@ export const LEVEL_COLORS = ['#6f8fe8', '#7fb3f0', '#8fd6c8', '#b5df8a', '#f7cf4
 // puffer coat starts at 14°; beanie, scarf and gloves only below 10°.
 // Bump RULES_VERSION when the defaults change so browsers holding the old
 // defaults pick up the new ones.
-const RULES_VERSION = 4;
+const RULES_VERSION = 5;
 const lvl = (max, shirt, bottom, shoes, extra = {}) => ({
   max, shirt, bottom, shoes, sweatshirt: false, coat: false, winter: false, cap: false, ...extra,
 });
@@ -22,9 +22,7 @@ export const defaultRules = () => ({
   levels: [
     lvl(10, 'long', 'pants', 'sneakers', { sweatshirt: true, coat: true, winter: true }), // freezing
     lvl(14, 'long', 'pants', 'sneakers', { sweatshirt: true, coat: true }), // very cold
-    // cold: a short-sleeve shirt under the sweatshirt – such mornings usually
-    // warm up, and the sweatshirt comes off
-    lvl(19, 'tee', 'pants', 'sneakers', { sweatshirt: true }), // cold
+    lvl(19, 'long', 'pants', 'sneakers', { sweatshirt: true }), // cold
     lvl(23, 'long', 'pants', 'sneakers'), // cool: a thin long-sleeve shirt
     lvl(26, 'tee', 'shorts', 'sneakers'), // pleasant
     lvl(29, 'tee', 'shorts', 'sneakers', { cap: true }), // warm
@@ -71,8 +69,8 @@ const sortItems = (arr) => [...new Set(arr)].sort((x, y) => ORDER.indexOf(x) - O
 // accessories a later part needs that the morning doesn't (a cap, an
 // umbrella, a sweatshirt for a cold evening) go in the bag.
 // The shirt is one for the whole day – nobody changes shirts at school: if
-// any part of the day calls for short sleeves, it's a short-sleeve shirt.
-// Sweatshirts, coats and the rest come only from the table.
+// any part of the day calls for short sleeves, it's a short-sleeve shirt, and
+// a part whose row says long sleeves gets a sweatshirt over it instead.
 // Trousers and shoes stay on all day: shorts and sandals only if the whole
 // day is warm enough for them.
 export function planOutfit(hours, offset = 0, rules = defaultRules()) {
@@ -94,7 +92,8 @@ export function planOutfit(hours, offset = 0, rules = defaultRules()) {
     const t = Math.min(...pf), tMax = Math.max(...pf);
     const lv = L(t);
     const layers = [], acc = [];
-    if (lv.sweatshirt) layers.push('sweatshirt');
+    // a part that wants long sleeves on a short-sleeve day gets a sweatshirt
+    if (lv.sweatshirt || (lv.shirt === 'long' && dayTee)) layers.push('sweatshirt');
     if (lv.coat) layers.push('coat');
     if (lv.winter) acc.push('scarf', 'beanie', 'gloves');
     if (ph.some(rainy)) acc.push('umbrella');
