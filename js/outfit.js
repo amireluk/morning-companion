@@ -8,24 +8,27 @@
 export const LEVEL_NAMES = ['קפוא', 'קר מאוד', 'קר', 'קריר', 'נעים', 'חם', 'חם מאוד'];
 export const LEVEL_COLORS = ['#6f8fe8', '#7fb3f0', '#8fd6c8', '#b5df8a', '#f7cf4f', '#f59f4c', '#e8604c'];
 
-// Defaults tuned for Israel. People here are comfortable at about 20–25°C
-// (a Tel Aviv outdoor-comfort study), so under ~19° already feels cold and the
-// puffer coat starts at 14°; beanie, scarf and gloves only below 10°.
+// Defaults tuned for Israel, on the feels-like temperature. Adults here are
+// comfortable at about 20–25°C (a Tel Aviv outdoor-comfort study), but kids
+// are more active, and the feels-like number leaves out the sun – a sunny
+// morning feels warmer than it says. Real-life check: an 18–20° morning was
+// pleasant in a T-shirt. So short sleeves from 18°, a sweatshirt under 16°,
+// the coat under 12°, winter gear under 8°; shorts from 24°.
 // Bump RULES_VERSION when the defaults change so browsers holding the old
 // defaults pick up the new ones.
-const RULES_VERSION = 5;
+const RULES_VERSION = 6;
 const lvl = (max, shirt, bottom, shoes, extra = {}) => ({
   max, shirt, bottom, shoes, sweatshirt: false, coat: false, winter: false, cap: false, ...extra,
 });
 export const defaultRules = () => ({
   v: RULES_VERSION,
   levels: [
-    lvl(10, 'long', 'pants', 'sneakers', { sweatshirt: true, coat: true, winter: true }), // freezing
-    lvl(14, 'long', 'pants', 'sneakers', { sweatshirt: true, coat: true }), // very cold
-    lvl(19, 'long', 'pants', 'sneakers', { sweatshirt: true }), // cold
-    lvl(23, 'long', 'pants', 'sneakers'), // cool: a thin long-sleeve shirt
-    lvl(26, 'tee', 'shorts', 'sneakers'), // pleasant
-    lvl(29, 'tee', 'shorts', 'sneakers', { cap: true }), // warm
+    lvl(8, 'long', 'pants', 'sneakers', { sweatshirt: true, coat: true, winter: true }), // freezing
+    lvl(12, 'long', 'pants', 'sneakers', { sweatshirt: true, coat: true }), // very cold
+    lvl(16, 'long', 'pants', 'sneakers', { sweatshirt: true }), // cold
+    lvl(18, 'long', 'pants', 'sneakers'), // cool: a thin long-sleeve shirt
+    lvl(24, 'tee', 'pants', 'sneakers'), // pleasant: T-shirt, long trousers
+    lvl(28, 'tee', 'shorts', 'sneakers', { cap: true }), // warm
     lvl(null, 'tee', 'shorts', 'sandals', { cap: true }), // hot
   ],
   // boots: 'heavy' (at least bootsMm of rain in the day), 'any' rain, or 'never'
