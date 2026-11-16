@@ -13,10 +13,11 @@ export const LEVEL_COLORS = ['#6f8fe8', '#7fb3f0', '#8fd6c8', '#b5df8a', '#f7cf4
 // are more active, and the feels-like number leaves out the sun – a sunny
 // morning feels warmer than it says. Real-life check: an 18–20° morning was
 // pleasant in a T-shirt. So short sleeves from 18°, a sweatshirt under 16°,
-// the coat under 12°, winter gear under 8°; shorts from 24°.
+// the coat under 12°, winter gear under 8°; warm (shorts, cap) from 26°,
+// hot (sandals) from 30°.
 // Bump RULES_VERSION when the defaults change so browsers holding the old
 // defaults pick up the new ones.
-const RULES_VERSION = 6;
+const RULES_VERSION = 7;
 const lvl = (max, shirt, bottom, shoes, extra = {}) => ({
   max, shirt, bottom, shoes, sweatshirt: false, coat: false, winter: false, cap: false, ...extra,
 });
@@ -27,8 +28,8 @@ export const defaultRules = () => ({
     lvl(12, 'long', 'pants', 'sneakers', { sweatshirt: true, coat: true }), // very cold
     lvl(16, 'long', 'pants', 'sneakers', { sweatshirt: true }), // cold
     lvl(18, 'long', 'pants', 'sneakers'), // cool: a thin long-sleeve shirt
-    lvl(24, 'tee', 'pants', 'sneakers'), // pleasant: T-shirt, long trousers
-    lvl(28, 'tee', 'shorts', 'sneakers', { cap: true }), // warm
+    lvl(26, 'tee', 'pants', 'sneakers'), // pleasant: T-shirt, long trousers
+    lvl(30, 'tee', 'shorts', 'sneakers', { cap: true }), // warm
     lvl(null, 'tee', 'shorts', 'sandals', { cap: true }), // hot
   ],
   // boots: 'heavy' (at least bootsMm of rain in the day), 'any' rain, or 'never'
