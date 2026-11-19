@@ -619,3 +619,5 @@ legend { font-weight: 700; padding: 0 6px; }
   .graph { height: 120px; border-radius: 16px; padding: 4px 4px 0; }
 }
 .g-pop { font: 700 14px Fredoka, 'Varela Round', sans-serif; fill: #1f6fbf; text-anchor: middle; }
+.g-now { stroke: #e5534b; stroke-width: 3; stroke-dasharray: 6 5; stroke-linecap: round; }
+.g-now-t { font: 700 13px Fredoka, 'Varela Round', sans-serif; fill: #e5534b; text-anchor: middle; }
